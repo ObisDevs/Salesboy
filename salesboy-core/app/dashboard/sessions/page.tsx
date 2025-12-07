@@ -8,6 +8,7 @@ export default function SessionsPage() {
   const [sessionStatus, setSessionStatus] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [qrCode, setQrCode] = useState('')
 
   const startSession = async () => {
     setLoading(true)
@@ -23,6 +24,8 @@ export default function SessionsPage() {
         setError(data.error || 'Failed to start session')
       } else {
         checkStatus()
+        // Start listening for QR code
+        listenForQR()
       }
     } catch (error: any) {
       setError(error.message || 'Network error')
@@ -54,6 +57,23 @@ export default function SessionsPage() {
     } catch (error) {
       console.error(error)
     }
+  }
+
+  const listenForQR = () => {
+    const eventSource = new EventSource(`${process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://srv892192.hstgr.cloud:3001'}/session/qr/current-user`)
+    
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data)
+      if (data.qr) {
+        setQrCode(data.qr)
+      }
+    }
+    
+    eventSource.onerror = () => {
+      eventSource.close()
+    }
+    
+    return () => eventSource.close()
   }
 
   useEffect(() => {
@@ -100,6 +120,20 @@ export default function SessionsPage() {
           </Button>
         </div>
       </div>
+
+      {qrCode && (
+        <div className="card">
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
+            Scan QR Code
+          </h2>
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
+            Open WhatsApp on your phone and scan this QR code
+          </p>
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <img src={qrCode} alt="WhatsApp QR Code" style={{ maxWidth: '300px', border: '2px solid var(--border)' }} />
+          </div>
+        </div>
+      )}
     </>
   )
 }
