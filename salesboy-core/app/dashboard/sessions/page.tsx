@@ -60,7 +60,7 @@ export default function SessionsPage() {
   }
 
   const listenForQR = () => {
-    const eventSource = new EventSource(`${process.env.NEXT_PUBLIC_GATEWAY_URL || 'http://srv892192.hstgr.cloud:3001'}/session/qr/current-user`)
+    const eventSource = new EventSource('/api/sessions/qr?userId=current-user')
     
     eventSource.onmessage = (event) => {
       const data = JSON.parse(event.data)
