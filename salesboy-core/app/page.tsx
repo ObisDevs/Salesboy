@@ -1,67 +1,64 @@
+import Link from 'next/link'
+
 export default function Home() {
   return (
-    <div style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      fontFamily: 'system-ui, -apple-system, sans-serif',
-      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
-    }}>
-      <div style={{
-        background: 'white',
-        padding: '3rem',
-        borderRadius: '1rem',
-        boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-        maxWidth: '600px',
-        textAlign: 'center'
-      }}>
-        <h1 style={{ fontSize: '2.5rem', marginBottom: '1rem', color: '#333' }}>
-          🤖 Salesboy AI
-        </h1>
-        <p style={{ fontSize: '1.2rem', color: '#666', marginBottom: '2rem' }}>
-          WhatsApp AI Assistant for Nigerian Businesses
-        </p>
-        
-        <div style={{ 
-          background: '#f7fafc', 
-          padding: '1.5rem', 
-          borderRadius: '0.5rem',
-          marginBottom: '1.5rem'
-        }}>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#333' }}>
-            ✅ System Status
-          </h2>
-          <div style={{ textAlign: 'left', fontSize: '0.95rem' }}>
-            <p>✅ Core Backend: <strong>Running</strong></p>
-            <p>✅ AI Pipeline: <strong>Ready</strong></p>
-            <p>✅ RAG System: <strong>Active</strong></p>
-            <p>✅ Gateway Integration: <strong>Connected</strong></p>
+    <div style={{ minHeight: '100vh', padding: '2rem' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div className="brutalist-border" style={{ padding: '2rem', marginBottom: '2rem', background: '#000' }}>
+          <h1 style={{ fontSize: '3rem', color: '#00ff00', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+            SALESBOY AI
+          </h1>
+          <p style={{ fontSize: '1.2rem', color: '#ffd700' }}>
+            WhatsApp Business Automation System
+          </p>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '2rem' }}>
+          <div className="brutalist-border" style={{ padding: '1.5rem', background: '#1a1a1a' }}>
+            <h2 style={{ color: '#ffd700', marginBottom: '1rem', fontSize: '1.5rem' }}>SYSTEM STATUS</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#00ff00' }}>■</span>
+                <span>Core Backend: RUNNING</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#00ff00' }}>■</span>
+                <span>AI Pipeline: READY</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#00ff00' }}>■</span>
+                <span>RAG System: ACTIVE</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ color: '#00ff00' }}>■</span>
+                <span>Gateway: CONNECTED</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="brutalist-border" style={{ padding: '1.5rem', background: '#1a1a1a' }}>
+            <h2 style={{ color: '#ffd700', marginBottom: '1rem', fontSize: '1.5rem' }}>MILESTONE 3</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
+              <div>▸ WhatsApp Webhook Handler</div>
+              <div>▸ RAG Pipeline with Pinecone</div>
+              <div>▸ Intent Classification</div>
+              <div>▸ Knowledge Base APIs</div>
+              <div>▸ Session Management</div>
+              <div>▸ Task Forwarding to n8n</div>
+            </div>
           </div>
         </div>
 
-        <div style={{ 
-          background: '#edf2f7', 
-          padding: '1.5rem', 
-          borderRadius: '0.5rem',
-          marginBottom: '1.5rem'
-        }}>
-          <h2 style={{ fontSize: '1.2rem', marginBottom: '1rem', color: '#333' }}>
-            📊 Milestone 3 Complete
-          </h2>
-          <div style={{ textAlign: 'left', fontSize: '0.9rem', color: '#555' }}>
-            <p>✅ WhatsApp Webhook Handler</p>
-            <p>✅ RAG Pipeline with Pinecone</p>
-            <p>✅ Intent Classification</p>
-            <p>✅ Knowledge Base APIs</p>
-            <p>✅ Session Management</p>
-            <p>✅ Task Forwarding to n8n</p>
-          </div>
+        <div className="brutalist-border" style={{ padding: '2rem', background: '#1a1a1a', textAlign: 'center' }}>
+          <Link href="/dashboard">
+            <button className="brutalist-button" style={{ fontSize: '1.2rem' }}>
+              ENTER DASHBOARD
+            </button>
+          </Link>
         </div>
 
-        <div style={{ fontSize: '0.85rem', color: '#888' }}>
-          <p>API Endpoints: /api/webhook/whatsapp</p>
-          <p>Version: 1.0.0 | Milestone 3</p>
+        <div style={{ marginTop: '2rem', textAlign: 'center', color: '#666', fontSize: '0.9rem' }}>
+          <p>API: /api/webhook/whatsapp | VERSION: 1.0.0</p>
         </div>
       </div>
     </div>
