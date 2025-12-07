@@ -67,21 +67,16 @@ export default function SessionsPage() {
     }
   }
 
-  const listenForQR = () => {
-    const eventSource = new EventSource('/api/sessions/qr?userId=current-user')
-    
-    eventSource.onmessage = (event) => {
-      const data = JSON.parse(event.data)
+  const listenForQR = async () => {
+    try {
+      const res = await fetch('/api/sessions/qr?userId=current-user')
+      const data = await res.json()
       if (data.qr) {
         setQrCode(data.qr)
       }
+    } catch (error) {
+      console.error('QR fetch error:', error)
     }
-    
-    eventSource.onerror = () => {
-      eventSource.close()
-    }
-    
-    return () => eventSource.close()
   }
 
   useEffect(() => {
