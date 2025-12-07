@@ -36,14 +36,22 @@ export default function SessionsPage() {
 
   const stopSession = async () => {
     setLoading(true)
+    setError('')
     try {
-      await fetch('/api/sessions/stop', {
+      const res = await fetch('/api/sessions/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: 'current-user' })
       })
-      setSessionStatus(null)
-    } catch (error) {
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to stop session')
+      } else {
+        setSessionStatus(null)
+        setQrCode('')
+      }
+    } catch (error: any) {
+      setError(error.message || 'Network error')
       console.error(error)
     }
     setLoading(false)
@@ -78,7 +86,21 @@ export default function SessionsPage() {
 
   useEffect(() => {
     checkStatus()
+    // Auto-start QR listener if session exists
+    const interval = setInterval(() => {
+      checkStatus()
+    }, 5000)
+    
+    return () => clearInterval(interval)
   }, [])
+
+  useEffect(() => {
+    // Start QR listener if session is ready
+    if (sessionStatus?.gateway_status?.ready) {
+      const cleanup = listenForQR()
+      return cleanup
+    }
+  }, [sessionStatus])
 
   return (
     <>
