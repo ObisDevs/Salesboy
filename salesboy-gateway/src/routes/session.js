@@ -39,10 +39,11 @@ router.post('/stop', async (req, res) => {
 });
 
 // Get session status
-router.get('/status/:userId', (req, res) => {
+router.get('/status/:userId', async (req, res) => {
   const { userId } = req.params;
   const status = sessionManager.getSessionStatus(userId);
-  res.json(status);
+  const qr = await sessionManager.getQRCode(userId);
+  res.json({ ...status, qr });
 });
 
 // Get QR code (SSE)
