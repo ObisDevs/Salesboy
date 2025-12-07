@@ -86,21 +86,8 @@ export default function SessionsPage() {
 
   useEffect(() => {
     checkStatus()
-    // Auto-start QR listener if session exists
-    const interval = setInterval(() => {
-      checkStatus()
-    }, 5000)
-    
-    return () => clearInterval(interval)
+    listenForQR()
   }, [])
-
-  useEffect(() => {
-    // Start QR listener if session is ready
-    if (sessionStatus?.gateway_status?.ready) {
-      const cleanup = listenForQR()
-      return cleanup
-    }
-  }, [sessionStatus])
 
   return (
     <>
@@ -130,15 +117,23 @@ export default function SessionsPage() {
             {sessionStatus?.gateway_status?.ready ? 'Connected' : 'Disconnected'}
           </span>
         </div>
+        {sessionStatus && (
+          <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px', fontSize: '0.875rem' }}>
+            <pre>{JSON.stringify(sessionStatus, null, 2)}</pre>
+          </div>
+        )}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <Button onClick={startSession} disabled={loading || sessionStatus?.gateway_status?.ready}>
+          <Button onClick={startSession} disabled={loading}>
             {loading ? <><LoadingSpinner /> Starting...</> : 'Start Session'}
           </Button>
-          <Button onClick={stopSession} disabled={loading || !sessionStatus?.gateway_status?.ready}>
+          <Button onClick={stopSession} disabled={loading}>
             {loading ? <><LoadingSpinner /> Stopping...</> : 'Stop Session'}
           </Button>
           <Button onClick={checkStatus} disabled={loading}>
             Refresh Status
+          </Button>
+          <Button onClick={listenForQR}>
+            Listen for QR
           </Button>
         </div>
       </div>
