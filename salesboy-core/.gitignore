@@ -1,10 +1,10 @@
 node_modules/
 .env
 .env.local
+.env.production
 .next/
-dist/
+out/
 build/
 *.log
 .DS_Store
 .vercel
-.wrangler/
