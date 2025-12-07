@@ -11,20 +11,32 @@ export async function POST(request: NextRequest) {
     }
     
     // Start session via gateway
-    const response = await startSession(user_id)
+    let gatewayResponse
+    try {
+      gatewayResponse = await startSession(user_id)
+    } catch (err: any) {
+      console.error('Gateway error:', err.message)
+      return NextResponse.json({ 
+        error: 'Gateway not available. Make sure the gateway is running on your VPS.' 
+      }, { status: 503 })
+    }
     
     // Update session status in database
-    await supabaseAdmin
-      .from('sessions')
-      .upsert({
-        user_id,
-        status: 'starting',
-        updated_at: new Date().toISOString()
-      })
+    try {
+      await supabaseAdmin
+        .from('sessions')
+        .upsert({
+          user_id,
+          status: 'starting',
+          updated_at: new Date().toISOString()
+        })
+    } catch (err) {
+      console.error('DB error:', err)
+    }
     
-    return NextResponse.json(response.data)
-  } catch (error) {
+    return NextResponse.json(gatewayResponse.data)
+  } catch (error: any) {
     console.error('Start session error:', error)
-    return NextResponse.json({ error: 'Failed to start session' }, { status: 500 })
+    return NextResponse.json({ error: error.message || 'Failed to start session' }, { status: 500 })
   }
 }

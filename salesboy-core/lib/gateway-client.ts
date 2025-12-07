@@ -23,11 +23,11 @@ export async function sendMessage(request: SendMessageRequest) {
 }
 
 export async function startSession(userId: string) {
-  return await gatewayClient.post('/session/start', { user_id: userId })
+  return await gatewayClient.post('/session/start', { userId })
 }
 
 export async function stopSession(userId: string) {
-  return await gatewayClient.post('/session/stop', { user_id: userId })
+  return await gatewayClient.post('/session/stop', { userId })
 }
 
 export async function getSessionStatus(userId: string) {

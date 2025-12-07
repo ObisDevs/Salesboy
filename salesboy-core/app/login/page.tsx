@@ -18,7 +18,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
@@ -26,8 +26,9 @@ export default function LoginPage() {
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else {
-      router.push('/dashboard')
+    } else if (data.session) {
+      // Force a hard refresh to update cookies
+      window.location.href = '/dashboard'
     }
   }
 

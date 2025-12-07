@@ -7,17 +7,25 @@ import { LoadingSpinner } from '@/app/components/ui/loading'
 export default function SessionsPage() {
   const [sessionStatus, setSessionStatus] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   const startSession = async () => {
     setLoading(true)
+    setError('')
     try {
-      await fetch('/api/sessions/start', {
+      const res = await fetch('/api/sessions/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ user_id: 'current-user' })
       })
-      checkStatus()
-    } catch (error) {
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Failed to start session')
+      } else {
+        checkStatus()
+      }
+    } catch (error: any) {
+      setError(error.message || 'Network error')
       console.error(error)
     }
     setLoading(false)
@@ -63,6 +71,11 @@ export default function SessionsPage() {
         <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
           Session Status
         </h2>
+        {error && (
+          <div style={{ padding: '1rem', background: '#fee', border: '1px solid #fcc', borderRadius: '8px', marginBottom: '1rem', color: '#c00' }}>
+            {error}
+          </div>
+        )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.5rem' }}>
           <div style={{ 
             width: '12px', 
