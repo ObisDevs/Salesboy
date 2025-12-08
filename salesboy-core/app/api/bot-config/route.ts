@@ -30,6 +30,7 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     
+    // Upsert with onConflict on user_id (unique constraint)
     const { data, error } = await supabaseAdmin
       .from('bot_config')
       .upsert({
@@ -39,14 +40,20 @@ export async function PUT(request: NextRequest) {
         model: body.model,
         max_tokens: body.max_tokens,
         metadata: body.metadata || {}
+      }, {
+        onConflict: 'user_id'
       })
       .select()
       .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('Bot config upsert error:', error)
+      throw error
+    }
     
     return NextResponse.json({ data })
   } catch (error: any) {
+    console.error('Bot config update error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
