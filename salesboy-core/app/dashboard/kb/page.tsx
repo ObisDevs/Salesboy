@@ -34,17 +34,47 @@ export default function KnowledgeBasePage() {
     formData.append('file', file)
 
     try {
-      const res = await fetch('/api/kb/upload', {
+      // Step 1: Upload
+      const uploadRes = await fetch('/api/kb/upload', {
         method: 'POST',
         body: formData
       })
-      const result = await res.json()
-      if (!res.ok) {
-        showToast('Upload failed: ' + result.error, 'error')
-      } else {
-        showToast('File uploaded successfully', 'success')
-        await fetchFiles() // Refresh list
+      const uploadResult = await uploadRes.json()
+      if (!uploadRes.ok) {
+        showToast('Upload failed: ' + uploadResult.error, 'error')
+        return
       }
+
+      const fileId = uploadResult.data.id
+      showToast('Processing document...', 'success')
+
+      // Step 2: Process
+      const processRes = await fetch('/api/kb/process', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: fileId })
+      })
+      if (!processRes.ok) {
+        showToast('Processing failed', 'error')
+        return
+      }
+
+      showToast('Embedding document...', 'success')
+
+      // Step 3: Embed
+      const embedRes = await fetch('/api/kb/embed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: fileId })
+      })
+      const embedResult = await embedRes.json()
+      if (!embedRes.ok) {
+        showToast('Embedding failed: ' + embedResult.error, 'error')
+        return
+      }
+
+      showToast(`✅ Document ready! ${embedResult.vectors} chunks embedded`, 'success')
+      await fetchFiles()
     } catch (error) {
       showToast('Upload failed', 'error')
     } finally {
