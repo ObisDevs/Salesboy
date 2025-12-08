@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/app/components/ui/button'
 import DashboardHeader from '@/app/components/DashboardHeader'
 import { LoadingSpinner } from '@/app/components/ui/loading'
@@ -9,6 +9,7 @@ export default function SessionsPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [qrCode, setQrCode] = useState('')
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   const startSession = async () => {
     setLoading(true)
@@ -49,12 +50,34 @@ export default function SessionsPage() {
       } else {
         setSessionStatus(null)
         setQrCode('')
+        stopAutoRefresh()
       }
     } catch (error: any) {
       setError(error.message || 'Network error')
       console.error(error)
     }
     setLoading(false)
+  }
+
+  const disconnectSession = async () => {
+    if (!confirm('Are you sure you want to disconnect this WhatsApp session?')) {
+      return
+    }
+    await stopSession()
+  }
+
+  const startAutoRefresh = () => {
+    stopAutoRefresh()
+    intervalRef.current = setInterval(() => {
+      checkStatus()
+    }, 3000) // Check every 3 seconds
+  }
+
+  const stopAutoRefresh = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+      intervalRef.current = null
+    }
   }
 
   const checkStatus = async () => {
@@ -81,8 +104,18 @@ export default function SessionsPage() {
 
   useEffect(() => {
     checkStatus()
-    listenForQR()
+    startAutoRefresh()
+    
+    return () => {
+      stopAutoRefresh()
+    }
   }, [])
+
+  useEffect(() => {
+    if (sessionStatus?.gateway_status?.exists && !sessionStatus?.gateway_status?.ready) {
+      listenForQR()
+    }
+  }, [sessionStatus])
 
   return (
     <>
@@ -118,17 +151,25 @@ export default function SessionsPage() {
           </div>
         )}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-          <Button onClick={startSession} disabled={loading}>
-            {loading ? <><LoadingSpinner /> Starting...</> : 'Start Session'}
-          </Button>
-          <Button onClick={stopSession} disabled={loading}>
-            {loading ? <><LoadingSpinner /> Stopping...</> : 'Stop Session'}
-          </Button>
+          {!sessionStatus?.gateway_status?.exists ? (
+            <Button onClick={startSession} disabled={loading}>
+              {loading ? <><LoadingSpinner /> Starting...</> : 'Start Session'}
+            </Button>
+          ) : (
+            <>
+              {sessionStatus?.gateway_status?.ready ? (
+                <Button onClick={disconnectSession} disabled={loading} style={{ background: '#dc2626' }}>
+                  {loading ? <><LoadingSpinner /> Disconnecting...</> : 'Disconnect Session'}
+                </Button>
+              ) : (
+                <Button onClick={stopSession} disabled={loading}>
+                  {loading ? <><LoadingSpinner /> Stopping...</> : 'Cancel Session'}
+                </Button>
+              )}
+            </>
+          )}
           <Button onClick={checkStatus} disabled={loading}>
             Refresh Status
-          </Button>
-          <Button onClick={listenForQR}>
-            Listen for QR
           </Button>
         </div>
       </div>

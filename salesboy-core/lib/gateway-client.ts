@@ -12,7 +12,7 @@ const gatewayClient = axios.create({
 })
 
 export interface SendMessageRequest {
-  user_id: string
+  userId: string
   to: string
   message: string
   type?: 'text' | 'media'
@@ -31,5 +31,5 @@ export async function stopSession(userId: string) {
 }
 
 export async function getSessionStatus(userId: string) {
-  return await gatewayClient.get(`/session/status`)
+  return await gatewayClient.get(`/session/status/${userId}`)
 }

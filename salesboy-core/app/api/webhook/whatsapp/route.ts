@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     // Send response back via gateway
     try {
       await sendMessage({
-        user_id,
+        userId: user_id,
         to: from,
         message: response
       })
