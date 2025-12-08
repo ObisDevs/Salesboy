@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 const USER_ID = '00000000-0000-0000-0000-000000000001'
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50')
 
     // Direct query - bypass RPC
     const { data, error } = await supabaseAdmin
