@@ -45,57 +45,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Message ignored - not whitelisted' })
     }
     
-    // Log the incoming message (encrypted)
-    await supabaseAdmin
-      .from('chat_logs')
-      .insert({
-        user_id,
-        phone_number: from,
-        message_type: 'incoming',
-        content: encrypt(message),
-        timestamp: new Date().toISOString()
-      })
-    
-    // Classify intent
-    const intent = await classifyIntent(message)
-    
-    let response: string
-    
-    if (intent.intent === 'Response') {
-      // Generate RAG response
-      response = await processMessage(user_id, message)
-    } else if (intent.intent === 'Task') {
-      // Forward to n8n (implement in next step)
-      response = 'I\'ve received your request and will process it shortly.'
-      // TODO: Forward to n8n workflow
-    } else {
-      // Human handoff
-      response = 'I\'ll connect you with a human agent who can better assist you.'
-      // TODO: Notify human agent
-    }
+    // Simple test response (bypassing AI for now)
+    const response = `Hello! I received your message: "${message}". This is a test response from Salesboy AI.`
     
     // Send response back via gateway
-    await sendMessage({
-      user_id,
-      to: from,
-      message: response
-    })
-    
-    // Log the outgoing message (encrypted)
-    await supabaseAdmin
-      .from('chat_logs')
-      .insert({
+    try {
+      await sendMessage({
         user_id,
-        phone_number: from,
-        message_type: 'outgoing',
-        content: encrypt(response),
-        timestamp: new Date().toISOString()
+        to: from,
+        message: response
       })
+    } catch (error) {
+      console.error('Failed to send message:', error)
+    }
     
     return NextResponse.json({ 
       message: 'Processed successfully',
-      intent: intent.intent,
-      confidence: intent.confidence
+      response: response
     })
     
   } catch (error) {
