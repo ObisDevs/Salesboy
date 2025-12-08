@@ -19,6 +19,8 @@ export async function POST(request: NextRequest) {
     const data = JSON.parse(body)
     const { from, message, user_id } = data
     
+    console.log('Webhook received:', { from, message, user_id, body })
+    
     // Check if user exists and is active
     const { data: profile } = await supabaseAdmin
       .from('profiles')
