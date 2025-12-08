@@ -15,10 +15,10 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 
-// API key validation
+// API key validation (optional for development)
 app.use((req, res, next) => {
   const apiKey = req.headers['x-api-key'];
-  if (apiKey !== process.env.API_SECRET_KEY) {
+  if (process.env.NODE_ENV === 'production' && apiKey !== process.env.API_SECRET_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
   next();

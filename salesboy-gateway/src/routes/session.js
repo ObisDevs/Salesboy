@@ -6,11 +6,7 @@ const router = express.Router();
 
 // Start session
 router.post('/start', async (req, res) => {
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required' });
-  }
+  const { userId = 'current-user' } = req.body;
 
   try {
     const result = await sessionManager.createSession(userId);
@@ -23,11 +19,7 @@ router.post('/start', async (req, res) => {
 
 // Stop session
 router.post('/stop', async (req, res) => {
-  const { userId } = req.body;
-
-  if (!userId) {
-    return res.status(400).json({ error: 'userId is required' });
-  }
+  const { userId = 'current-user' } = req.body;
 
   try {
     const result = await sessionManager.stopSession(userId);
@@ -39,8 +31,16 @@ router.post('/stop', async (req, res) => {
 });
 
 // Get session status
-router.get('/status/:userId', async (req, res) => {
-  const { userId } = req.params;
+router.get('/status/:userId?', async (req, res) => {
+  const { userId = 'current-user' } = req.params;
+  const status = sessionManager.getSessionStatus(userId);
+  const qr = await sessionManager.getQRCode(userId);
+  res.json({ ...status, qr });
+});
+
+// Get session status (no userId required)
+router.get('/status', async (req, res) => {
+  const userId = 'current-user';
   const status = sessionManager.getSessionStatus(userId);
   const qr = await sessionManager.getQRCode(userId);
   res.json({ ...status, qr });
