@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
       console.log('💬 Generating AI response...')
       try {
         // Build conversation context
-        const recentMessages = chatHistory?.slice(0, 5).reverse().map(msg => 
+        const recentMessages = chatHistory?.slice(0, 5).reverse().map((msg: any) => 
           `${msg.direction === 'incoming' ? 'Customer' : 'You'}: ${msg.message_body}`
         ).join('\n') || ''
         
