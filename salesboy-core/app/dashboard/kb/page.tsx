@@ -21,13 +21,21 @@ export default function KnowledgeBasePage() {
     const formData = new FormData()
     formData.append('file', file)
 
-    await fetch('/api/kb/upload', {
-      method: 'POST',
-      body: formData
-    })
-
-    fetchFiles()
+    try {
+      const res = await fetch('/api/kb/upload', {
+        method: 'POST',
+        body: formData
+      })
+      if (!res.ok) {
+        const error = await res.json()
+        alert('Upload failed: ' + error.error)
+      }
+      fetchFiles()
+    } catch (error) {
+      alert('Upload failed')
+    }
     setUploading(false)
+    e.target.value = ''
   }
 
   const deleteFile = async (id: string) => {
@@ -46,20 +54,20 @@ export default function KnowledgeBasePage() {
       
       <div className="card">
         <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'inline-block', cursor: 'pointer' }}>
-            <span style={{ display: 'inline-block' }}>
-              <Button disabled={uploading}>
-                {uploading ? 'Uploading...' : 'Upload Document'}
-              </Button>
-            </span>
-            <input
-              type="file"
-              onChange={uploadFile}
-              accept=".pdf,.doc,.docx,.txt"
-              style={{ display: 'none' }}
-              disabled={uploading}
-            />
-          </label>
+          <input
+            id="file-upload"
+            type="file"
+            onChange={uploadFile}
+            accept=".pdf,.doc,.docx,.txt"
+            style={{ display: 'none' }}
+            disabled={uploading}
+          />
+          <Button 
+            onClick={() => document.getElementById('file-upload')?.click()} 
+            disabled={uploading}
+          >
+            {uploading ? 'Uploading...' : 'Upload Document'}
+          </Button>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
