@@ -6,9 +6,14 @@ export default function LogsPage() {
   const [logs, setLogs] = useState<any[]>([])
 
   const fetchLogs = async () => {
-    const res = await fetch('/api/logs')
-    const { data } = await res.json()
-    setLogs(data || [])
+    try {
+      const res = await fetch('/api/logs')
+      const { data } = await res.json()
+      console.log('Logs fetched:', data)
+      setLogs(data || [])
+    } catch (error) {
+      console.error('Fetch logs error:', error)
+    }
   }
 
   useEffect(() => {

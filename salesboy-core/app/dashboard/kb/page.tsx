@@ -8,9 +8,14 @@ export default function KnowledgeBasePage() {
   const [uploading, setUploading] = useState(false)
 
   const fetchFiles = async () => {
-    const res = await fetch('/api/kb/list')
-    const { data } = await res.json()
-    setFiles(data || [])
+    try {
+      const res = await fetch('/api/kb/list')
+      const { data } = await res.json()
+      console.log('KB files:', data)
+      setFiles(data || [])
+    } catch (error) {
+      console.error('Fetch files error:', error)
+    }
   }
 
   const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -29,8 +34,9 @@ export default function KnowledgeBasePage() {
       if (!res.ok) {
         const error = await res.json()
         alert('Upload failed: ' + error.error)
+      } else {
+        await fetchFiles()
       }
-      fetchFiles()
     } catch (error) {
       alert('Upload failed')
     }
