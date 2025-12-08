@@ -2,16 +2,39 @@ import pkg from 'whatsapp-web.js';
 const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode';
 import logger from '../utils/logger.js';
+import fs from 'fs';
+import path from 'path';
 
 class SessionManager {
   constructor() {
     this.sessions = new Map();
+    this.restoreExistingSessions();
+  }
+
+  restoreExistingSessions() {
+    try {
+      const authDir = '.wwebjs_auth';
+      if (!fs.existsSync(authDir)) return;
+      
+      const sessions = fs.readdirSync(authDir);
+      sessions.forEach(sessionDir => {
+        if (sessionDir.startsWith('session-')) {
+          const userId = sessionDir.replace('session-', '');
+          logger.info(`Restoring session for user ${userId}`);
+          this.createSession(userId).catch(err => 
+            logger.error(`Failed to restore session for ${userId}:`, err)
+          );
+        }
+      });
+    } catch (error) {
+      logger.error('Error restoring sessions:', error);
+    }
   }
 
   async createSession(userId) {
     if (this.sessions.has(userId)) {
       logger.info(`Session already exists for user ${userId}`);
-      return { success: false, message: 'Session already exists' };
+      return { success: true, message: 'Session already exists' };
     }
 
     const client = new Client({
