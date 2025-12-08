@@ -30,27 +30,40 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('Webhook PUT request:', body)
     
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: selectError } = await supabaseAdmin
       .from('profiles')
       .select('metadata')
       .eq('id', USER_ID)
       .single()
+
+    if (selectError) {
+      console.error('Profile select error:', selectError)
+      throw selectError
+    }
 
     const updatedMetadata = {
       ...(profile?.metadata || {}),
       n8n_kb_webhook: body.n8n_kb_webhook
     }
 
+    console.log('Updating metadata:', updatedMetadata)
+
     const { error } = await supabaseAdmin
       .from('profiles')
       .update({ metadata: updatedMetadata })
       .eq('id', USER_ID)
 
-    if (error) throw error
+    if (error) {
+      console.error('Profile update error:', error)
+      throw error
+    }
 
+    console.log('Webhook saved successfully')
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    console.error('Webhook PUT error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
