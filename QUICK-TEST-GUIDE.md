@@ -1,175 +1,230 @@
-# Quick Test Guide - Salesboy AI
+# Salesboy AI - Quick Testing Guide
 
-## Test the AI Pipeline NOW (Without n8n)
+## Current Status ✅
 
-The AI is fully functional and ready to test! n8n is optional for now.
+- ✅ Gateway running on VPS: `http://srv892192.hstgr.cloud:3001`
+- ✅ Core backend deployed: `https://salesboy-lilac.vercel.app`
+- ✅ Supabase connected
+- ✅ Pinecone configured (empty - needs data)
+- ✅ Gemini & OpenAI APIs configured
 
-### What Works Right Now:
+## Issue: Pinecone Shows 0 Records
 
-✅ **AI Responses** - Questions, product inquiries, greetings
-✅ **RAG Pipeline** - Knowledge base retrieval + AI generation
-✅ **Intent Classification** - Automatically detects Response/Task/HumanHandoff
-✅ **Task Acknowledgment** - Confirms task processing (even without n8n)
-✅ **WhatsApp Integration** - Full send/receive
+**This is normal!** You haven't uploaded any documents yet. The knowledge base is empty.
 
-### Quick Test Steps:
+## How to Fix: Upload Test Data
 
-#### 1. Start WhatsApp Session
-
-```bash
-# Go to dashboard
-https://salesboy-lilac.vercel.app/dashboard/sessions
-
-# Click "Start Session"
-# Scan QR code with your WhatsApp
-# Wait for "Connected" status
-```
-
-#### 2. Upload Knowledge Base (Optional)
+### Option 1: Using the Test Script (Recommended)
 
 ```bash
-# Go to KB page
-https://salesboy-lilac.vercel.app/dashboard/kb
-
-# Upload a document with product info
-# Example content:
-"""
-Products:
-- iPhone 14 Pro: ₦850,000
-- iPhone 14: ₦750,000
-- Samsung S23: ₦650,000
-
-Business Hours: Mon-Sat 9AM-6PM
-Location: Lagos, Nigeria
-"""
+cd /workspaces/Salesboy
+chmod +x test-kb-simple.sh
+./test-kb-simple.sh
 ```
 
-#### 3. Test AI Responses
+This will:
+1. Create a test document
+2. Upload it to Supabase Storage
+3. Process and chunk the text
+4. Generate embeddings
+5. Upload vectors to Pinecone
 
-Send these messages from WhatsApp:
+After running, check Pinecone dashboard - you should see vectors in namespace `user_test-user-123`
 
-**Test 1: Simple Question**
-```
-You: What products do you have?
-AI: [Lists products from knowledge base or general response]
-```
-
-**Test 2: Price Check**
-```
-You: How much is iPhone 14?
-AI: [Provides price if in knowledge base]
-```
-
-**Test 3: Greeting**
-```
-You: Hello, good morning!
-AI: [Friendly greeting response]
-```
-
-**Test 4: Order (Task Intent)**
-```
-You: I want to buy 2 iPhone 14 Pro
-AI: Got it! I'm processing your order. You'll get a confirmation shortly.
-```
-*Note: Task is acknowledged but won't execute until n8n is configured*
-
-**Test 5: Booking (Task Intent)**
-```
-You: Can I schedule a meeting tomorrow at 2pm?
-AI: Perfect! I'm scheduling that for you now. I'll send you the details in a moment.
-```
-
-**Test 6: Complaint (HumanHandoff)**
-```
-You: I want a refund, this is not working
-AI: I've notified our team about your request. Someone will get back to you shortly.
-```
-
-### Alternative: Test via Script
+### Option 2: Manual Testing
 
 ```bash
-cd salesboy-core
-node test-ai-pipeline.js
+# 1. Create test file
+cat > test.txt << 'EOF'
+Salesboy AI is a WhatsApp automation platform.
+We offer three pricing plans: Basic (₦5,000), Pro (₦15,000), and Enterprise.
+Contact us at support@salesboy.ai or +234 800 123 4567.
+Business hours: Monday-Friday 9AM-6PM WAT.
+EOF
+
+# 2. Upload
+curl -X POST https://salesboy-lilac.vercel.app/api/kb/upload \
+  -F "file=@test.txt" \
+  -F "user_id=test-user-123"
+
+# Note the file_id from response
+
+# 3. Process (replace FILE_ID)
+curl -X POST https://salesboy-lilac.vercel.app/api/kb/process \
+  -H "Content-Type: application/json" \
+  -d '{"file_id": "FILE_ID"}'
+
+# 4. Embed (replace FILE_ID)
+curl -X POST https://salesboy-lilac.vercel.app/api/kb/embed \
+  -H "Content-Type: application/json" \
+  -d '{"file_id": "FILE_ID"}'
 ```
 
-This runs 7 automated tests covering all intent types.
+## WhatsApp QR Code Issue
 
-### Check Logs
+Your logs show the session is generating QR codes but they're not being retrieved. This happens because:
 
-**Dashboard Logs:**
+1. **Session already authenticated** - Check if `ready: true` in status
+2. **Timing issue** - QR generated but not queried at right time
+3. **Session in weird state** - Needs reset
+
+### Solution: Reset and Get Fresh QR
+
+```bash
+cd /workspaces/Salesboy
+chmod +x reset-and-get-qr.sh
+./reset-and-get-qr.sh
 ```
-https://salesboy-lilac.vercel.app/dashboard/logs
+
+This will:
+1. Stop existing session
+2. Wait for cleanup
+3. Start new session
+4. Wait for QR generation
+5. Retrieve and display QR code
+
+### Alternative: Check if Already Connected
+
+```bash
+curl http://srv892192.hstgr.cloud:3001/session/status/current-user \
+  -H "X-API-KEY: 0ac2f6495dbba3807785e791780244afdeb63829d78331a6611d0fbd56d7812f"
 ```
 
-**Supabase Logs:**
+If you see `"ready": true`, your WhatsApp is already connected! No QR needed.
+
+## Testing End-to-End Flow
+
+### 1. Ensure Session is Ready
+
+```bash
+# Check status
+curl http://srv892192.hstgr.cloud:3001/session/status/current-user \
+  -H "X-API-KEY: 0ac2f6495dbba3807785e791780244afdeb63829d78331a6611d0fbd56d7812f"
+
+# Should return: {"exists": true, "ready": true, "qr": null}
+```
+
+### 2. Upload Knowledge Base Data
+
+```bash
+./test-kb-simple.sh
+```
+
+### 3. Send Test Message to Your WhatsApp
+
+From another phone, send a message to the WhatsApp number connected to the gateway.
+
+Example: "What are your pricing plans?"
+
+### 4. Check Logs
+
+On VPS:
+```bash
+ssh root@srv892192.hstgr.cloud
+pm2 logs salesboy-gateway --lines 50
+```
+
+Look for:
+- "Message received from..."
+- "Message forwarded to webhook..."
+
+On Vercel:
+- Go to your deployment
+- Click "Logs" tab
+- Look for webhook processing
+
+## Expected Flow
+
+```
+Customer WhatsApp Message
+    ↓
+Gateway receives message
+    ↓
+Gateway forwards to webhook (with HMAC)
+    ↓
+Core backend validates HMAC
+    ↓
+Checks whitelist (will fail if not whitelisted)
+    ↓
+Classifies intent
+    ↓
+Retrieves context from Pinecone
+    ↓
+Generates AI response
+    ↓
+Sends back via gateway
+    ↓
+Customer receives response
+```
+
+## Common Issues
+
+### 1. "Message ignored - not whitelisted"
+
+**Solution:** Add the phone number to whitelist in Supabase:
+
 ```sql
-SELECT 
-  direction,
-  message_body,
-  metadata->>'intent' as intent,
-  metadata->>'task_type' as task_type,
-  timestamp
-FROM chat_logs
-ORDER BY timestamp DESC
-LIMIT 20;
+INSERT INTO whitelists (user_id, phone_number, active)
+VALUES ('current-user', '2348012345678@c.us', true);
 ```
 
-### Expected Behavior:
+### 2. "Gateway not available"
 
-| Message Type | Intent | AI Action |
-|-------------|--------|-----------|
-| "What products?" | Response | RAG search + AI answer |
-| "How much is X?" | Response | RAG search + AI answer |
-| "I want to buy X" | Task: create_order | Acknowledge + forward to n8n |
-| "Schedule meeting" | Task: book_calendar | Acknowledge + forward to n8n |
-| "Send me email" | Task: send_email | Acknowledge + forward to n8n |
-| "I want refund" | HumanHandoff | Acknowledge + notify team |
+**Solution:** Check if gateway is running:
+```bash
+ssh root@srv892192.hstgr.cloud
+pm2 status
+pm2 restart salesboy-gateway
+```
 
-### Troubleshooting:
+### 3. "No relevant context found"
 
-**AI not responding?**
-1. Check session status: `/dashboard/sessions`
-2. Verify Vercel deployment is live
-3. Check environment variables in Vercel
-4. Review logs in Vercel dashboard
+**Solution:** Upload documents to knowledge base (see above)
 
-**Wrong responses?**
-1. Upload better knowledge base content
-2. Adjust bot config: `/dashboard/bot-config`
-3. Modify system prompt
-4. Check intent classification in logs
+### 4. "HMAC validation failed"
 
-**Tasks not working?**
-Tasks will be acknowledged but won't execute until n8n workflows are set up. This is expected!
+**Solution:** Ensure HMAC_SECRET matches in both gateway and core:
+- Gateway: `/root/salesboy-gateway/.env`
+- Core: Vercel environment variables
 
-### Next Steps:
+## Quick Commands Reference
 
-1. ✅ Test AI responses (do this now!)
-2. ✅ Upload knowledge base documents
-3. ✅ Adjust bot configuration
-4. ⏳ Set up n8n workflows (optional, for task execution)
-5. ⏳ Configure task integrations (email, calendar, etc.)
+```bash
+# Check system status
+./check-system-status.sh
 
-### Performance Tips:
+# Reset WhatsApp session and get QR
+./reset-and-get-qr.sh
 
-- **Response Time**: 2-5 seconds typical
-- **Knowledge Base**: Upload 5-10 documents for best results
-- **System Prompt**: Be specific about your business
-- **Temperature**: 0.7 for balanced responses
+# Upload test knowledge base
+./test-kb-simple.sh
 
-### What Happens Without n8n:
+# Check gateway logs
+ssh root@srv892192.hstgr.cloud "pm2 logs salesboy-gateway --lines 50"
 
-- ✅ AI still responds to questions
-- ✅ Tasks are classified correctly
-- ✅ User gets acknowledgment
-- ❌ Tasks don't execute (no email sent, no order created)
-- ✅ Everything logged for later processing
+# Restart gateway
+ssh root@srv892192.hstgr.cloud "pm2 restart salesboy-gateway"
+```
 
-You can use the system fully for Q&A and information, then add n8n later for task automation!
+## Success Criteria
 
-## Ready to Test?
+✅ Gateway status shows `ready: true`  
+✅ Pinecone shows vectors in `user_*` namespace  
+✅ Test message receives AI response  
+✅ Response includes context from knowledge base  
 
-1. Go to: https://salesboy-lilac.vercel.app/dashboard/sessions
-2. Start session and scan QR
-3. Send a WhatsApp message
-4. Watch the magic happen! ✨
+## Next Steps After Testing
+
+1. **Add real business data** to knowledge base
+2. **Configure bot settings** in Supabase `bot_config` table
+3. **Set up whitelists** for customer phone numbers
+4. **Configure n8n workflows** for task automation
+5. **Build dashboard UI** for easier management (Milestone 4)
+
+---
+
+**Need Help?**
+- Check logs: `pm2 logs salesboy-gateway`
+- Check Vercel logs in dashboard
+- Review error messages in responses
+- Ensure all environment variables are set correctly

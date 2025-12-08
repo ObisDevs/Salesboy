@@ -1,59 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-
-const USER_ID = '00000000-0000-0000-0000-000000000001'
+import { generateEmbedding, chunkText } from '@/lib/embeddings'
+import { upsertVectors } from '@/lib/pinecone'
+// @ts-ignore
+import pdf from 'pdf-parse'
+import mammoth from 'mammoth'
 
 export async function POST(request: NextRequest) {
   try {
     const { file_id } = await request.json()
-    console.log('Trigger embed for file:', file_id)
     
-    const { data: file, error: fileError } = await supabaseAdmin
+    if (!file_id) {
+      return NextResponse.json({ error: 'file_id required' }, { status: 400 })
+    }
+    
+    // Get file metadata
+    const { data: kbFile } = await supabaseAdmin
       .from('knowledge_base')
       .select('*')
       .eq('id', file_id)
       .single()
     
-    if (fileError || !file) {
-      console.error('File not found:', fileError)
+    if (!kbFile) {
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
-    }
-    
-    // Get user's n8n webhook
-    const { data: profile, error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .select('metadata')
-      .eq('id', USER_ID)
-      .single()
-    
-    console.log('Profile metadata:', profile?.metadata)
-    
-    const n8nWebhook = profile?.metadata?.n8n_kb_webhook
-    if (!n8nWebhook) {
-      console.error('n8n webhook not configured in profile metadata')
-      return NextResponse.json({ error: 'n8n webhook not configured. Go to Settings to add your n8n webhook URL.' }, { status: 400 })
-    }
-    
-    console.log('Calling n8n webhook:', n8nWebhook)
-    
-    // Trigger n8n webhook
-    const response = await fetch(n8nWebhook, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        file_id: file.id,
-        user_id: USER_ID,
-        filename: file.filename,
-        file_path: file.file_path,
-        mime_type: file.mime_type,
-        supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        supabase_service_key: process.env.SUPABASE_SERVICE_ROLE_KEY,
-        bucket: 'knowledge-base'
-      })
-    })
-    
-    if (!response.ok) {
-      throw new Error('n8n webhook failed')
     }
     
     // Update status to processing
@@ -62,9 +31,89 @@ export async function POST(request: NextRequest) {
       .update({ status: 'processing' })
       .eq('id', file_id)
     
-    return NextResponse.json({ success: true })
+    // Download file from storage
+    const { data: fileData } = await supabaseAdmin.storage
+      .from('knowledge-base')
+      .download(kbFile.file_path)
+    
+    if (!fileData) {
+      throw new Error('Failed to download file')
+    }
+    
+    // Extract text based on file type
+    let text = ''
+    const buffer = await fileData.arrayBuffer()
+    
+    if (kbFile.mime_type === 'application/pdf') {
+      const pdfData = await pdf(Buffer.from(buffer))
+      text = pdfData.text
+    } else if (kbFile.mime_type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) })
+      text = result.value
+    } else if (kbFile.mime_type === 'text/plain' || kbFile.mime_type === 'text/markdown') {
+      text = new TextDecoder().decode(buffer)
+    } else {
+      // Try as text anyway
+      text = new TextDecoder().decode(buffer)
+    }
+    
+    // Chunk the text
+    const chunks = chunkText(text, 500)
+    
+    // Generate embeddings and upsert to Pinecone
+    const vectors = []
+    
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i]
+      const embedding = await generateEmbedding(chunk)
+      
+      vectors.push({
+        id: `${file_id}_chunk_${i}`,
+        values: embedding,
+        metadata: {
+          user_id: kbFile.user_id,
+          filename: kbFile.filename,
+          chunk_index: i,
+          text: chunk
+        }
+      })
+    }
+    
+    await upsertVectors(kbFile.user_id, vectors)
+    
+    // Update file status to embedded
+    await supabaseAdmin
+      .from('knowledge_base')
+      .update({
+        status: 'embedded',
+        chunk_count: chunks.length,
+        processed_at: new Date().toISOString(),
+        embedded_at: new Date().toISOString()
+      })
+      .eq('id', file_id)
+    
+    return NextResponse.json({
+      success: true,
+      message: 'File embedded successfully',
+      chunks: chunks.length,
+      vectors: vectors.length,
+      text_length: text.length,
+      filename: kbFile.filename
+    })
   } catch (error: any) {
-    console.error('Trigger embed error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('Embed error:', error)
+    
+    // Update file status to failed
+    const body = await request.json().catch(() => ({}))
+    if (body.file_id) {
+      await supabaseAdmin
+        .from('knowledge_base')
+        .update({ status: 'failed' })
+        .eq('id', body.file_id)
+    }
+    
+    return NextResponse.json({ 
+      error: error.message || 'Failed to embed file' 
+    }, { status: 500 })
   }
 }

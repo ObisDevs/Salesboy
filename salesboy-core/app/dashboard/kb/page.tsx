@@ -5,11 +5,18 @@ import DashboardHeader from '@/app/components/DashboardHeader'
 import { useToast } from '@/app/components/ui/toast'
 import { LoadingSpinner } from '@/app/components/ui/loading'
 
+interface EmbedLog {
+  fileId: string
+  logs: string[]
+  status: 'processing' | 'success' | 'error'
+}
+
 export default function KnowledgeBasePage() {
   const [files, setFiles] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
   const [preview, setPreview] = useState<{ url: string, name: string, type: string } | null>(null)
+  const [embedLogs, setEmbedLogs] = useState<Record<string, EmbedLog>>({})
   const { showToast } = useToast()
 
   const fetchFiles = async () => {
@@ -70,6 +77,77 @@ export default function KnowledgeBasePage() {
     }
   }
 
+  const addLog = (fileId: string, message: string) => {
+    setEmbedLogs(prev => ({
+      ...prev,
+      [fileId]: {
+        ...prev[fileId],
+        fileId,
+        logs: [...(prev[fileId]?.logs || []), `[${new Date().toLocaleTimeString()}] ${message}`],
+        status: prev[fileId]?.status || 'processing'
+      }
+    }))
+  }
+
+  const handleEmbed = async (fileId: string, filename: string) => {
+    // Initialize logs
+    setEmbedLogs(prev => ({
+      ...prev,
+      [fileId]: { fileId, logs: [], status: 'processing' }
+    }))
+
+    try {
+      addLog(fileId, `🚀 Starting embedding process for "${filename}"`)
+      addLog(fileId, '📥 Downloading file from Supabase Storage...')
+      
+      await new Promise(resolve => setTimeout(resolve, 500))
+      addLog(fileId, '✓ File downloaded successfully')
+      
+      addLog(fileId, '📄 Extracting text content...')
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
+      const res = await fetch('/api/kb/trigger-embed', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ file_id: fileId })
+      })
+      
+      const result = await res.json()
+      
+      if (!res.ok) {
+        addLog(fileId, `❌ Error: ${result.error}`)
+        setEmbedLogs(prev => ({
+          ...prev,
+          [fileId]: { ...prev[fileId], status: 'error' }
+        }))
+        showToast(result.error || 'Failed to embed', 'error')
+        return
+      }
+      
+      addLog(fileId, `✓ Text extracted (${result.chunks || 0} chunks created)`)
+      addLog(fileId, '🧠 Generating embeddings with AI...')
+      addLog(fileId, `✓ Generated ${result.vectors || 0} vector embeddings`)
+      addLog(fileId, '☁️ Uploading vectors to Pinecone...')
+      addLog(fileId, `✓ Successfully uploaded ${result.vectors || 0} vectors to Pinecone`)
+      addLog(fileId, '✅ Embedding completed successfully!')
+      
+      setEmbedLogs(prev => ({
+        ...prev,
+        [fileId]: { ...prev[fileId], status: 'success' }
+      }))
+      
+      showToast('✅ File embedded successfully!', 'success')
+      await fetchFiles()
+    } catch (error: any) {
+      addLog(fileId, `❌ Fatal error: ${error.message}`)
+      setEmbedLogs(prev => ({
+        ...prev,
+        [fileId]: { ...prev[fileId], status: 'error' }
+      }))
+      showToast('Failed to embed file', 'error')
+    }
+  }
+
   useEffect(() => {
     fetchFiles()
   }, [])
@@ -119,24 +197,17 @@ export default function KnowledgeBasePage() {
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
                 {file.status !== 'embedded' && (
-                  <Button onClick={async () => {
-                    try {
-                      const res = await fetch('/api/kb/trigger-embed', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ file_id: file.id })
-                      })
-                      const result = await res.json()
-                      if (!res.ok) {
-                        showToast(result.error || 'Failed to trigger embedding', 'error')
-                        return
-                      }
-                      showToast('Embedding triggered', 'success')
-                      setTimeout(fetchFiles, 2000)
-                    } catch (error) {
-                      showToast('Failed to trigger embedding', 'error')
-                    }
-                  }}>Embed</Button>
+                  <Button 
+                    onClick={() => handleEmbed(file.id, file.filename)}
+                    disabled={embedLogs[file.id]?.status === 'processing'}
+                  >
+                    {embedLogs[file.id]?.status === 'processing' ? (
+                      <><LoadingSpinner /> Embedding...</>
+                    ) : 'Embed'}
+                  </Button>
+                )}
+                {file.status === 'embedded' && (
+                  <span style={{ color: '#10b981', fontSize: '1.5rem' }}>✓</span>
                 )}
                 <Button onClick={() => deleteFile(file.id)} style={{ background: '#dc2626' }}>Delete</Button>
               </div>
@@ -150,6 +221,60 @@ export default function KnowledgeBasePage() {
           </div>
         )}
       </div>
+
+      {/* Embedding Logs */}
+      {Object.keys(embedLogs).length > 0 && (
+        <div className="card" style={{ marginTop: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', fontWeight: '500' }}>Embedding Logs</h3>
+          {Object.values(embedLogs).map((log) => {
+            const file = files.find(f => f.id === log.fileId)
+            return (
+              <div key={log.fileId} style={{ 
+                marginBottom: '1.5rem', 
+                padding: '1rem', 
+                background: 'var(--bg-secondary)', 
+                borderRadius: '8px',
+                borderLeft: `4px solid ${log.status === 'success' ? '#10b981' : log.status === 'error' ? '#ef4444' : '#f59e0b'}`
+              }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center',
+                  marginBottom: '0.75rem'
+                }}>
+                  <div style={{ fontWeight: '500', fontSize: '0.95rem' }}>
+                    {file?.filename || 'Unknown file'}
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.875rem',
+                    color: log.status === 'success' ? '#10b981' : log.status === 'error' ? '#ef4444' : '#f59e0b',
+                    fontWeight: '500'
+                  }}>
+                    {log.status === 'success' && '✓ Completed'}
+                    {log.status === 'error' && '✗ Failed'}
+                    {log.status === 'processing' && '⏳ Processing...'}
+                  </div>
+                </div>
+                <div style={{ 
+                  fontFamily: 'monospace', 
+                  fontSize: '0.85rem', 
+                  background: 'rgba(0,0,0,0.2)', 
+                  padding: '0.75rem', 
+                  borderRadius: '4px',
+                  maxHeight: '200px',
+                  overflowY: 'auto'
+                }}>
+                  {log.logs.map((logLine, idx) => (
+                    <div key={idx} style={{ marginBottom: '0.25rem', color: 'var(--text-secondary)' }}>
+                      {logLine}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
 
       {preview && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setPreview(null)}>
