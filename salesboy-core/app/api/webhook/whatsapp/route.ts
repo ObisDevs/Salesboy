@@ -63,8 +63,21 @@ export async function POST(request: NextRequest) {
     
     // STEP 1: Classify Intent
     console.log('🧠 Classifying intent...')
-    const intent = await classifyIntent(message)
-    console.log('✅ Intent classified:', intent)
+    let intent
+    try {
+      intent = await classifyIntent(message)
+      console.log('✅ Intent classified:', intent)
+    } catch (error) {
+      console.error('❌ Intent classification failed:', error)
+      // Fallback to Response intent
+      intent = {
+        intent: 'Response',
+        confidence: 0.5,
+        task_type: null,
+        payload: null,
+        raw_analysis: 'Classification failed, using fallback'
+      }
+    }
     
     let responseMessage = ''
     
@@ -111,8 +124,13 @@ export async function POST(request: NextRequest) {
     } else {
       // Response intent - use RAG pipeline
       console.log('💬 Generating RAG response...')
-      responseMessage = await processMessage(actualUserId, message)
-      console.log('✅ RAG response generated')
+      try {
+        responseMessage = await processMessage(actualUserId, message)
+        console.log('✅ RAG response generated')
+      } catch (error) {
+        console.error('❌ RAG pipeline failed:', error)
+        responseMessage = `Hello! Thanks for your message: "${message}". I'm having a bit of trouble right now, but I'm here to help. Could you try asking again or let me know if you need immediate assistance?`
+      }
     }
     
     // STEP 3: Send response
