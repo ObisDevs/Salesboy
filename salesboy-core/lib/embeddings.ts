@@ -1,19 +1,46 @@
-import OpenAI from 'openai'
+import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+
+// Pad vector to 1536 dimensions
+function padTo1536(vector: number[]): number[] {
+  if (vector.length === 1536) return vector
+  if (vector.length > 1536) return vector.slice(0, 1536)
+  return [...vector, ...new Array(1536 - vector.length).fill(0)]
+}
 
 export async function generateEmbedding(text: string): Promise<number[]> {
+  // Try Voyage AI first (free, 1536 dimensions)
   try {
-    // Use OpenAI text-embedding-3-small (1536 dimensions)
-    const response = await openai.embeddings.create({
-      model: 'text-embedding-3-small',
-      input: text,
-      dimensions: 1536
+    const response = await fetch('https://api.voyageai.com/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.VOYAGE_API_KEY || 'pa-'}`
+      },
+      body: JSON.stringify({
+        input: text,
+        model: 'voyage-2'
+      })
     })
-    return response.data[0].embedding
+    
+    if (response.ok) {
+      const data = await response.json()
+      return data.data[0].embedding
+    }
   } catch (error) {
-    console.error('OpenAI embedding failed:', error)
-    throw new Error('Failed to generate embeddings: ' + (error as any).message)
+    console.log('Voyage AI failed, trying Gemini:', error)
+  }
+
+  // Fallback to Gemini (768 dimensions, padded to 1536)
+  try {
+    const model = gemini.getGenerativeModel({ model: 'embedding-001' })
+    const result = await model.embedContent(text)
+    const embedding = result.embedding.values
+    return padTo1536(embedding)
+  } catch (error) {
+    console.error('Gemini embedding failed:', error)
+    throw new Error('All embedding providers failed')
   }
 }
 
