@@ -1,26 +1,20 @@
 import OpenAI from 'openai'
 
-const mistral = process.env.MISTRAL_API_KEY ? new OpenAI({
-  apiKey: process.env.MISTRAL_API_KEY,
-  baseURL: 'https://api.mistral.ai/v1'
-}) : null
+const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // Use Mistral embeddings (1536 dimensions, same as OpenAI)
-  if (mistral) {
-    try {
-      const response = await mistral.embeddings.create({
-        model: 'mistral-embed',
-        input: text
-      })
-      return response.data[0].embedding
-    } catch (error) {
-      console.error('Mistral embedding failed:', error)
-      throw error
-    }
+  try {
+    // Use OpenAI text-embedding-3-small (1536 dimensions)
+    const response = await openai.embeddings.create({
+      model: 'text-embedding-3-small',
+      input: text,
+      dimensions: 1536
+    })
+    return response.data[0].embedding
+  } catch (error) {
+    console.error('OpenAI embedding failed:', error)
+    throw new Error('Failed to generate embeddings: ' + (error as any).message)
   }
-  
-  throw new Error('MISTRAL_API_KEY not configured')
 }
 
 export function chunkText(text: string, maxTokens: number = 500): string[] {
