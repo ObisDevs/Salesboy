@@ -6,6 +6,7 @@ import DashboardHeader from '@/app/components/DashboardHeader'
 export default function KnowledgeBasePage() {
   const [files, setFiles] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [preview, setPreview] = useState<{ url: string, name: string, type: string } | null>(null)
 
   const fetchFiles = async () => {
     try {
@@ -85,7 +86,10 @@ export default function KnowledgeBasePage() {
                   {(file.file_size / 1024).toFixed(2)} KB • {file.status}
                 </div>
               </div>
-              <Button onClick={() => deleteFile(file.id)} style={{ background: '#dc2626' }}>Delete</Button>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Button onClick={() => setPreview({ url: file.file_path, name: file.filename, type: file.mime_type })}>Preview</Button>
+                <Button onClick={() => deleteFile(file.id)} style={{ background: '#dc2626' }}>Delete</Button>
+              </div>
             </div>
           ))}
           {files.length === 0 && (
@@ -95,6 +99,27 @@ export default function KnowledgeBasePage() {
           )}
         </div>
       </div>
+
+      {preview && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.8)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={() => setPreview(null)}>
+          <div style={{ background: 'var(--bg-primary)', padding: '2rem', borderRadius: '12px', maxWidth: '90%', maxHeight: '90%', overflow: 'auto' }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+              <h3>{preview.name}</h3>
+              <Button onClick={() => setPreview(null)}>Close</Button>
+            </div>
+            {preview.type?.includes('image') ? (
+              <img src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/knowledge-base/${preview.url}`} alt={preview.name} style={{ maxWidth: '100%' }} />
+            ) : preview.type?.includes('text') ? (
+              <iframe src={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/knowledge-base/${preview.url}`} style={{ width: '100%', height: '500px', border: 'none' }} />
+            ) : (
+              <div style={{ textAlign: 'center', padding: '2rem' }}>
+                <p>Preview not available for this file type</p>
+                <a href={`${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/knowledge-base/${preview.url}`} target="_blank" style={{ color: 'var(--accent)' }}>Download File</a>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
