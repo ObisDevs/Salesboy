@@ -15,9 +15,12 @@ export async function GET(request: NextRequest) {
       .order('timestamp', { ascending: false })
       .limit(limit)
 
+    console.log('Logs API - data:', data, 'error:', error)
+    
     if (error) throw error
     return NextResponse.json({ data })
   } catch (error: any) {
+    console.error('Logs API error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
