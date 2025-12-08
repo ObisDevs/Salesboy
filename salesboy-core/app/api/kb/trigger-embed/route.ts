@@ -82,15 +82,24 @@ export async function POST(request: NextRequest) {
     await upsertVectors(kbFile.user_id, vectors)
     
     // Update file status to embedded
-    await supabaseAdmin
+    const { error: updateError } = await supabaseAdmin
       .from('knowledge_base')
       .update({
         status: 'embedded',
-        chunk_count: chunks.length,
-        processed_at: new Date().toISOString(),
-        embedded_at: new Date().toISOString()
+        chunks_count: chunks.length,
+        metadata: {
+          text_length: text.length,
+          vectors_count: vectors.length,
+          embedded_at: new Date().toISOString()
+        }
       })
       .eq('id', file_id)
+    
+    if (updateError) {
+      console.error('Failed to update status to embedded:', updateError)
+    } else {
+      console.log('Status updated to embedded for file:', file_id)
+    }
     
     return NextResponse.json({
       success: true,
