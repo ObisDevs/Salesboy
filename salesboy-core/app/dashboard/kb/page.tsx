@@ -121,11 +121,16 @@ export default function KnowledgeBasePage() {
                 {file.status !== 'embedded' && (
                   <Button onClick={async () => {
                     try {
-                      await fetch('/api/kb/trigger-embed', {
+                      const res = await fetch('/api/kb/trigger-embed', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ file_id: file.id })
                       })
+                      const result = await res.json()
+                      if (!res.ok) {
+                        showToast(result.error || 'Failed to trigger embedding', 'error')
+                        return
+                      }
                       showToast('Embedding triggered', 'success')
                       setTimeout(fetchFiles, 2000)
                     } catch (error) {
