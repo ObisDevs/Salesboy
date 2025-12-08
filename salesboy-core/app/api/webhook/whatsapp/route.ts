@@ -21,15 +21,15 @@ export async function POST(request: NextRequest) {
     
     console.log('Webhook received:', { from, message, user_id, body })
     
-    // Check if user exists and is active
+    // Check if user exists
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('id, active')
+      .select('id')
       .eq('id', user_id)
       .single()
     
-    if (!profile || !profile.active) {
-      return NextResponse.json({ error: 'User not found or inactive' }, { status: 404 })
+    if (!profile) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
     
     // Check whitelist
