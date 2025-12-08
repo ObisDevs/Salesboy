@@ -54,13 +54,16 @@ export async function POST(request: NextRequest) {
     }
     
     // Log incoming message
-    const { error: logError } = await supabaseAdmin.from('chat_logs').insert({
+    console.log('Inserting log for:', actualUserId, from)
+    const { data: logData, error: logError } = await supabaseAdmin.from('chat_logs').insert({
       user_id: actualUserId,
       from_number: from,
       message_body: message,
       encrypted_payload: message,
       direction: 'incoming'
-    })
+    }).select()
+    
+    console.log('Insert result:', logData, 'error:', logError)
     
     if (logError) {
       console.error('Failed to log incoming message:', logError)
