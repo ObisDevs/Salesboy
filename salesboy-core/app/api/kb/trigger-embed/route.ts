@@ -6,28 +6,35 @@ const USER_ID = '00000000-0000-0000-0000-000000000001'
 export async function POST(request: NextRequest) {
   try {
     const { file_id } = await request.json()
+    console.log('Trigger embed for file:', file_id)
     
-    const { data: file } = await supabaseAdmin
+    const { data: file, error: fileError } = await supabaseAdmin
       .from('knowledge_base')
       .select('*')
       .eq('id', file_id)
       .single()
     
-    if (!file) {
+    if (fileError || !file) {
+      console.error('File not found:', fileError)
       return NextResponse.json({ error: 'File not found' }, { status: 404 })
     }
     
     // Get user's n8n webhook
-    const { data: profile } = await supabaseAdmin
+    const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
       .select('metadata')
       .eq('id', USER_ID)
       .single()
     
+    console.log('Profile metadata:', profile?.metadata)
+    
     const n8nWebhook = profile?.metadata?.n8n_kb_webhook
     if (!n8nWebhook) {
-      return NextResponse.json({ error: 'n8n webhook not configured' }, { status: 400 })
+      console.error('n8n webhook not configured in profile metadata')
+      return NextResponse.json({ error: 'n8n webhook not configured. Go to Settings to add your n8n webhook URL.' }, { status: 400 })
     }
+    
+    console.log('Calling n8n webhook:', n8nWebhook)
     
     // Trigger n8n webhook
     const response = await fetch(n8nWebhook, {
