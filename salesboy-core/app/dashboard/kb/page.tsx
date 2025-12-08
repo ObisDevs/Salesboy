@@ -196,13 +196,15 @@ export default function KnowledgeBasePage() {
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                {file.status === 'embedded' ? (
+                {(file.status === 'embedded' || embedLogs[file.id]?.status === 'success') ? (
                   <Button 
                     disabled
                     style={{ 
                       background: '#10b981', 
+                      color: 'white',
                       cursor: 'not-allowed',
-                      opacity: 0.9
+                      opacity: 1,
+                      border: 'none'
                     }}
                   >
                     ✓ Embedded
