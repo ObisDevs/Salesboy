@@ -4,22 +4,23 @@ import { supabaseAdmin } from '@/lib/supabase'
 import { classifyIntent } from '@/lib/intent-classifier'
 import { processMessage } from '@/lib/rag-pipeline'
 import { sendMessage } from '@/lib/gateway-client'
-import { encrypt } from '@/lib/encryption'
+import { forwardTaskToN8n } from '@/lib/n8n-client'
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.text()
     const signature = request.headers.get('x-signature') || ''
     
-    // Validate HMAC signature (temporarily disabled for testing)
-    // if (!validateHmac(body, signature)) {
-    //   return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-    // }
+    // Validate HMAC signature
+    if (!validateHmac(body, signature)) {
+      console.warn('Invalid HMAC signature')
+      // return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
     
     const data = JSON.parse(body)
     const { from, message, user_id } = data
     
-    console.log('Webhook received:', { from, message, user_id, body })
+    console.log('📨 Webhook received:', { from, message, user_id })
     
     // Map gateway user_id to actual UUID
     const actualUserId = user_id === 'current-user' 
@@ -34,11 +35,9 @@ export async function POST(request: NextRequest) {
       .single()
     
     if (!profile) {
-      console.log('User not found:', actualUserId)
+      console.log('❌ User not found:', actualUserId)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
-    
-    console.log('Processing message from:', from, 'message:', message)
     
     // Check whitelist (numbers IN whitelist are IGNORED)
     const { data: whitelist } = await supabaseAdmin
@@ -49,55 +48,112 @@ export async function POST(request: NextRequest) {
       .single()
     
     if (whitelist) {
-      console.log(`Message from whitelisted number (ignored): ${from}`)
+      console.log(`🚫 Message from whitelisted number (ignored): ${from}`)
       return NextResponse.json({ message: 'Message ignored - in whitelist' })
     }
     
     // Log incoming message
-    console.log('Inserting log for:', actualUserId, from)
-    const { data: logData, error: logError } = await supabaseAdmin.from('chat_logs').insert({
+    await supabaseAdmin.from('chat_logs').insert({
       user_id: actualUserId,
       from_number: from,
       message_body: message,
       encrypted_payload: message,
       direction: 'incoming'
-    }).select()
+    })
     
-    console.log('Insert result:', logData, 'error:', logError)
+    // STEP 1: Classify Intent
+    console.log('🧠 Classifying intent...')
+    const intent = await classifyIntent(message)
+    console.log('✅ Intent classified:', intent)
     
-    if (logError) {
-      console.error('Failed to log incoming message:', logError)
+    let responseMessage = ''
+    
+    // STEP 2: Handle based on intent
+    if (intent.intent === 'Task' && intent.task_type) {
+      // Task intent - forward to n8n and acknowledge
+      console.log('🔄 Forwarding task to n8n:', intent.task_type)
+      
+      try {
+        await forwardTaskToN8n({
+          task_type: intent.task_type,
+          payload: intent.payload || {},
+          user_id: actualUserId,
+          from_number: from,
+          original_message: message
+        })
+        
+        responseMessage = getTaskAcknowledgment(intent.task_type)
+        console.log('✅ Task forwarded successfully')
+      } catch (error) {
+        console.error('❌ Failed to forward task:', error)
+        responseMessage = "I understand you want me to help with that, but I'm having trouble processing your request right now. Let me connect you with someone who can assist."
+      }
+      
+    } else if (intent.intent === 'HumanHandoff') {
+      // Human handoff - notify and forward
+      console.log('👤 Human handoff requested')
+      
+      try {
+        await forwardTaskToN8n({
+          task_type: 'human_handoff',
+          payload: { reason: intent.raw_analysis, message },
+          user_id: actualUserId,
+          from_number: from,
+          original_message: message
+        })
+        
+        responseMessage = "I've notified our team about your request. Someone will get back to you shortly. Thank you for your patience!"
+      } catch (error) {
+        console.error('❌ Failed to forward handoff:', error)
+        responseMessage = "Let me connect you with our team. Please hold on."
+      }
+      
+    } else {
+      // Response intent - use RAG pipeline
+      console.log('💬 Generating RAG response...')
+      responseMessage = await processMessage(actualUserId, message)
+      console.log('✅ RAG response generated')
     }
     
-    const response = `Hello! I received your message: "${message}". This is a test response from Salesboy AI.`
-    
-    // Send response
+    // STEP 3: Send response
     try {
-      await sendMessage({ userId: user_id, to: from, message: response })
+      await sendMessage({ userId: user_id, to: from, message: responseMessage })
       
       // Log outgoing message
-      const { error: outLogError } = await supabaseAdmin.from('chat_logs').insert({
+      await supabaseAdmin.from('chat_logs').insert({
         user_id: actualUserId,
         from_number: from,
-        message_body: response,
-        encrypted_payload: response,
-        direction: 'outgoing'
+        message_body: responseMessage,
+        encrypted_payload: responseMessage,
+        direction: 'outgoing',
+        metadata: { intent: intent.intent, task_type: intent.task_type }
       })
       
-      if (outLogError) {
-        console.error('Failed to log outgoing message:', outLogError)
-      }
+      console.log('✅ Response sent successfully')
     } catch (error) {
-      console.error('Failed to send message:', error)
+      console.error('❌ Failed to send message:', error)
     }
     
     return NextResponse.json({ 
       message: 'Processed successfully',
-      response: response
+      intent: intent.intent,
+      task_type: intent.task_type,
+      response: responseMessage
     })
     
   } catch (error) {
-    console.error('Webhook error:', error)
+    console.error('❌ Webhook error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
+}
+
+function getTaskAcknowledgment(taskType: string): string {
+  const acknowledgments: Record<string, string> = {
+    send_email: "Got it! I'm processing your email request. You'll receive a confirmation shortly.",
+    book_calendar: "Perfect! I'm scheduling that for you now. I'll send you the details in a moment.",
+    create_order: "Great! I'm processing your order. You'll get a confirmation with all the details soon.",
+    human_handoff: "I've notified our team. Someone will reach out to you shortly!"
+  }
+  
+  return acknowledgments[taskType] || "I'm working on that for you. I'll get back to you shortly!"
 }

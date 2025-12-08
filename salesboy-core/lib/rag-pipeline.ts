@@ -36,9 +36,17 @@ export async function retrieveContext(
     relevance: match.score || 0
   })) || []
   
+  const defaultPrompt = `You are a helpful AI assistant for a Nigerian business. You help customers with:
+- Product information and pricing
+- Business hours and location
+- General inquiries about services
+- Answering questions based on the knowledge base
+
+Be friendly, professional, and concise. Use Nigerian English where appropriate. If you don't know something, say so politely and offer to connect them with a human agent.`
+  
   return {
     chunks,
-    systemPrompt: botConfig?.system_prompt || 'You are a helpful business assistant.'
+    systemPrompt: botConfig?.system_prompt || defaultPrompt
   }
 }
 
@@ -51,12 +59,18 @@ export async function generateRAGResponse(
     .map(chunk => `[${chunk.filename}]: ${chunk.text}`)
     .join('\n\n')
   
-  const prompt = `Context from knowledge base:
+  const hasContext = context.chunks.length > 0 && context.chunks[0].text
+  
+  const prompt = hasContext
+    ? `Context from knowledge base:
 ${contextText}
 
-User message: ${message}
+Customer message: ${message}
 
-Please provide a helpful response based on the context above. If the context doesn't contain relevant information, say so politely.`
+Provide a helpful, friendly response based on the context above. If the context doesn't fully answer the question, use your general knowledge but mention that you're providing general information.`
+    : `Customer message: ${message}
+
+No specific information found in the knowledge base. Provide a helpful, friendly response using your general knowledge. Be honest that you don't have specific details and offer to connect them with someone who can help if needed.`
 
   const response = await generateResponse(prompt, context.systemPrompt)
   return response.content
