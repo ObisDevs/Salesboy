@@ -8,7 +8,7 @@ export const whitelistSchema = z.object({
 export const botConfigSchema = z.object({
   system_prompt: z.string().min(10, 'System prompt must be at least 10 characters'),
   temperature: z.number().min(0).max(1),
-  model: z.enum(['gemini-pro', 'gpt-4', 'gpt-3.5-turbo']),
+  model: z.enum(['mistral-small', 'mistral-medium', 'gemini-pro', 'gpt-3.5-turbo', 'gpt-4']),
   max_tokens: z.number().min(100).max(2000)
 })
 

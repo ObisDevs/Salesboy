@@ -104,9 +104,11 @@ export default function BotConfigPage() {
                   background: 'var(--bg-primary)' 
                 }}
               >
+                <option value="mistral-small">Mistral Small (Fast & Cheap)</option>
+                <option value="mistral-medium">Mistral Medium</option>
                 <option value="gemini-pro">Gemini Pro</option>
-                <option value="gpt-4">GPT-4</option>
                 <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+                <option value="gpt-4">GPT-4 (Expensive)</option>
               </select>
             </div>
 
