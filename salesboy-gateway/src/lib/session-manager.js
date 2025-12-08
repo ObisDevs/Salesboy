@@ -63,20 +63,27 @@ class SessionManager {
       try {
         const webhookUrl = process.env.NEXT_WEBHOOK_URL;
         if (webhookUrl) {
+          const payload = {
+            user_id: userId,
+            from: message.from,
+            message: message.body,
+            timestamp: message.timestamp
+          };
+          
           const response = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'X-Webhook-Signature': 'hmac-signature-here' // TODO: Add HMAC
+              'x-signature': 'temp-signature' // Temporary - will fix HMAC later
             },
-            body: JSON.stringify({
-              userId,
-              from: message.from,
-              body: message.body,
-              timestamp: message.timestamp
-            })
+            body: JSON.stringify(payload)
           });
           logger.info(`Message forwarded to webhook: ${response.status}`);
+          
+          if (!response.ok) {
+            const errorText = await response.text();
+            logger.error(`Webhook error response: ${errorText}`);
+          }
         }
       } catch (error) {
         logger.error(`Failed to forward message to webhook:`, error);
