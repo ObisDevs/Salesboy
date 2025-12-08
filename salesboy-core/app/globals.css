@@ -112,3 +112,24 @@ body {
     opacity: 1;
   }
 }
+
+@media (max-width: 768px) {
+  aside {
+    position: fixed;
+    left: -240px;
+    z-index: 100;
+    transition: left 0.3s ease;
+  }
+  
+  aside.mobile-open {
+    left: 0;
+  }
+  
+  .card {
+    padding: 1rem;
+  }
+  
+  [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+  }
+}

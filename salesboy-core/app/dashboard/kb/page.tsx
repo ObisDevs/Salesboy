@@ -2,20 +2,26 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/app/components/ui/button'
 import DashboardHeader from '@/app/components/DashboardHeader'
+import { useToast } from '@/app/components/ui/toast'
+import { LoadingSpinner } from '@/app/components/ui/loading'
 
 export default function KnowledgeBasePage() {
   const [files, setFiles] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [preview, setPreview] = useState<{ url: string, name: string, type: string } | null>(null)
+  const { showToast } = useToast()
 
   const fetchFiles = async () => {
     try {
+      setLoading(true)
       const res = await fetch('/api/kb/list')
       const { data } = await res.json()
-      console.log('KB files:', data)
       setFiles(data || [])
     } catch (error) {
-      console.error('Fetch files error:', error)
+      showToast('Failed to fetch files', 'error')
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -34,12 +40,13 @@ export default function KnowledgeBasePage() {
       })
       if (!res.ok) {
         const error = await res.json()
-        alert('Upload failed: ' + error.error)
+        showToast('Upload failed: ' + error.error, 'error')
       } else {
         await fetchFiles()
+        showToast('File uploaded successfully', 'success')
       }
     } catch (error) {
-      alert('Upload failed')
+      showToast('Upload failed', 'error')
     }
     setUploading(false)
     e.target.value = ''
@@ -47,8 +54,13 @@ export default function KnowledgeBasePage() {
 
   const deleteFile = async (id: string) => {
     if (!confirm('Delete this file?')) return
-    await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
-    fetchFiles()
+    try {
+      await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
+      fetchFiles()
+      showToast('File deleted', 'success')
+    } catch (error) {
+      showToast('Failed to delete file', 'error')
+    }
   }
 
   useEffect(() => {
@@ -73,12 +85,18 @@ export default function KnowledgeBasePage() {
             onClick={() => document.getElementById('file-upload')?.click()} 
             disabled={uploading}
           >
-            {uploading ? 'Uploading...' : 'Upload Document'}
+            {uploading ? <><LoadingSpinner /> Uploading...</> : 'Upload Document'}
           </Button>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          {files.map((file) => (
+        {loading ? (
+          <div style={{ textAlign: 'center', padding: '3rem' }}>
+            <LoadingSpinner />
+            <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading files...</p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {files.map((file) => (
             <div key={file.id} style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div>
                 <div style={{ fontWeight: '500' }}>{file.filename}</div>
@@ -92,12 +110,13 @@ export default function KnowledgeBasePage() {
               </div>
             </div>
           ))}
-          {files.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-              No documents uploaded yet.
-            </div>
-          )}
-        </div>
+            {files.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                No documents uploaded yet.
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {preview && (

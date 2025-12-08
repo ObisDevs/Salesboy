@@ -2,10 +2,15 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/app/components/ui/button'
 import DashboardHeader from '@/app/components/DashboardHeader'
+import { useToast } from '@/app/components/ui/toast'
+import { profileSchema } from '@/lib/validation'
+import { LoadingSpinner } from '@/app/components/ui/loading'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({ full_name: '', phone_number: '', email: '' })
   const [loading, setLoading] = useState(false)
+  const [errors, setErrors] = useState<any>({})
+  const { showToast } = useToast()
 
   useEffect(() => {
     fetch('/api/profile').then(r => r.json()).then(d => setProfile(d.data || {}))
@@ -13,13 +18,33 @@ export default function SettingsPage() {
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    
+    try {
+      profileSchema.parse(profile)
+    } catch (err: any) {
+      const fieldErrors: any = {}
+      err.errors?.forEach((e: any) => {
+        fieldErrors[e.path[0]] = e.message
+      })
+      setErrors(fieldErrors)
+      showToast('Please fix validation errors', 'error')
+      return
+    }
+    
     setLoading(true)
-    await fetch('/api/profile', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(profile)
-    })
-    setLoading(false)
+    try {
+      await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(profile)
+      })
+      showToast('Profile updated successfully', 'success')
+    } catch (error) {
+      showToast('Failed to update profile', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -35,8 +60,9 @@ export default function SettingsPage() {
               type="text"
               value={profile.full_name || ''}
               onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)' }}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: `1px solid ${errors.full_name ? 'var(--error)' : 'var(--border)'}`, background: 'var(--bg-primary)' }}
             />
+            {errors.full_name && <p style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.full_name}</p>}
           </div>
           <div style={{ marginBottom: '1rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Phone Number</label>
@@ -44,8 +70,9 @@ export default function SettingsPage() {
               type="text"
               value={profile.phone_number || ''}
               onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)' }}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: `1px solid ${errors.phone_number ? 'var(--error)' : 'var(--border)'}`, background: 'var(--bg-primary)' }}
             />
+            {errors.phone_number && <p style={{ color: 'var(--error)', fontSize: '0.75rem', marginTop: '0.25rem' }}>{errors.phone_number}</p>}
           </div>
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Email</label>
@@ -56,7 +83,9 @@ export default function SettingsPage() {
               style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', opacity: 0.6 }}
             />
           </div>
-          <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
+          <Button type="submit" disabled={loading}>
+            {loading ? <><LoadingSpinner /> Saving...</> : 'Save Changes'}
+          </Button>
         </form>
       </div>
     </>

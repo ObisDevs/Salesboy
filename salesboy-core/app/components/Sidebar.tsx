@@ -8,9 +8,11 @@ export default function Sidebar() {
     { href: '/dashboard', label: 'Overview', icon: '◆' },
     { href: '/dashboard/sessions', label: 'Sessions', icon: '◇' },
     { href: '/dashboard/kb', label: 'Knowledge Base', icon: '◈' },
-    { href: '/dashboard/whitelist', label: 'Whitelist', icon: '◉' },
-    { href: '/dashboard/logs', label: 'Logs', icon: '◎' },
-    { href: '/dashboard/settings', label: 'Settings', icon: '◐' },
+    { href: '/dashboard/groups', label: 'Groups', icon: '◉' },
+    { href: '/dashboard/whitelist', label: 'Whitelist', icon: '◎' },
+    { href: '/dashboard/logs', label: 'Logs', icon: '◐' },
+    { href: '/dashboard/bot-config', label: 'Bot Config', icon: '◑' },
+    { href: '/dashboard/settings', label: 'Settings', icon: '◒' },
   ]
 
   return (

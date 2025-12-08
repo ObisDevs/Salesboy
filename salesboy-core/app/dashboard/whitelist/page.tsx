@@ -2,12 +2,16 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/app/components/ui/button'
 import DashboardHeader from '@/app/components/DashboardHeader'
+import { useToast } from '@/app/components/ui/toast'
+import { whitelistSchema } from '@/lib/validation'
 
 export default function WhitelistPage() {
   const [whitelist, setWhitelist] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({ phone_number: '', name: '', notes: '' })
+  const [errors, setErrors] = useState<any>({})
+  const { showToast } = useToast()
 
   const fetchWhitelist = async () => {
     const res = await fetch('/api/whitelist')
@@ -17,22 +21,47 @@ export default function WhitelistPage() {
 
   const addNumber = async (e: React.FormEvent) => {
     e.preventDefault()
+    setErrors({})
+    
+    try {
+      whitelistSchema.parse({ phone_number: formData.phone_number, label: formData.name })
+    } catch (err: any) {
+      const fieldErrors: any = {}
+      err.errors?.forEach((e: any) => {
+        fieldErrors[e.path[0]] = e.message
+      })
+      setErrors(fieldErrors)
+      showToast('Please fix validation errors', 'error')
+      return
+    }
+    
     setLoading(true)
-    await fetch('/api/whitelist', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    })
-    setFormData({ phone_number: '', name: '', notes: '' })
-    setShowForm(false)
-    fetchWhitelist()
-    setLoading(false)
+    try {
+      await fetch('/api/whitelist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      })
+      setFormData({ phone_number: '', name: '', notes: '' })
+      setShowForm(false)
+      fetchWhitelist()
+      showToast('Number added successfully', 'success')
+    } catch (error) {
+      showToast('Failed to add number', 'error')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const removeNumber = async (id: string) => {
     if (!confirm('Remove this number?')) return
-    await fetch(`/api/whitelist?id=${id}`, { method: 'DELETE' })
-    fetchWhitelist()
+    try {
+      await fetch(`/api/whitelist?id=${id}`, { method: 'DELETE' })
+      fetchWhitelist()
+      showToast('Number removed', 'success')
+    } catch (error) {
+      showToast('Failed to remove number', 'error')
+    }
   }
 
   useEffect(() => {
@@ -59,8 +88,9 @@ export default function WhitelistPage() {
               value={formData.phone_number}
               onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
               required
-              style={{ width: '100%', padding: '0.75rem', marginBottom: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)' }}
+              style={{ width: '100%', padding: '0.75rem', marginBottom: '0.25rem', borderRadius: '6px', border: `1px solid ${errors.phone_number ? 'var(--error)' : 'var(--border)'}`, background: 'var(--bg-primary)' }}
             />
+            {errors.phone_number && <p style={{ color: 'var(--error)', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{errors.phone_number}</p>}
             <input
               type="text"
               placeholder="Name"
