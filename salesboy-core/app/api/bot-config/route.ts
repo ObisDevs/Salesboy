@@ -7,13 +7,25 @@ const USER_ID = '00000000-0000-0000-0000-000000000001'
 
 export async function GET() {
   try {
+    const timestamp = Date.now()
+    console.log(`[${timestamp}] Fetching bot config...`)
+    
     const { data, error } = await supabaseAdmin
       .from('bot_config')
       .select('*')
       .eq('user_id', USER_ID)
+      .order('updated_at', { ascending: false })
+      .limit(1)
       .single()
 
-    console.log('Bot config GET:', { hasData: !!data, error: error?.code, prompt: data?.system_prompt?.substring(0, 50) })
+    console.log(`[${timestamp}] Bot config GET:`, { 
+      hasData: !!data, 
+      error: error?.code, 
+      prompt: data?.system_prompt?.substring(0, 50),
+      fullPrompt: data?.system_prompt,
+      model: data?.model,
+      updated_at: data?.updated_at
+    })
 
     if (error && error.code === 'PGRST116') {
       console.log('No config found, returning null')
