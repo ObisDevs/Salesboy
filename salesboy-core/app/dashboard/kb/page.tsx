@@ -195,8 +195,19 @@ export default function KnowledgeBasePage() {
                   </span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                {file.status !== 'embedded' && (
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                {file.status === 'embedded' ? (
+                  <Button 
+                    disabled
+                    style={{ 
+                      background: '#10b981', 
+                      cursor: 'not-allowed',
+                      opacity: 0.9
+                    }}
+                  >
+                    ✓ Embedded
+                  </Button>
+                ) : (
                   <Button 
                     onClick={() => handleEmbed(file.id, file.filename)}
                     disabled={embedLogs[file.id]?.status === 'processing'}
@@ -205,9 +216,6 @@ export default function KnowledgeBasePage() {
                       <><LoadingSpinner /> Embedding...</>
                     ) : 'Embed'}
                   </Button>
-                )}
-                {file.status === 'embedded' && (
-                  <span style={{ color: '#10b981', fontSize: '1.5rem' }}>✓</span>
                 )}
                 <Button onClick={() => deleteFile(file.id)} style={{ background: '#dc2626' }}>Delete</Button>
               </div>
