@@ -139,16 +139,40 @@ export async function processMessage(
   conversationContext?: string
 ): Promise<string> {
   try {
-    const context = await retrieveContext(userId, message)
-    
-    // Get bot config for temperature
+    // Get bot config
     const { data: botConfig } = await supabaseAdmin
       .from('bot_config')
-      .select('temperature')
+      .select('system_prompt, temperature')
       .eq('user_id', userId)
       .single()
     
     const temperature = botConfig?.temperature || 0.7
+    const systemPrompt = botConfig?.system_prompt || `You are a friendly, intelligent AI sales assistant for a Nigerian business.
+
+Your personality:
+- Warm and welcoming (use Nigerian expressions naturally)
+- Professional but conversational
+- Helpful and knowledgeable
+- Quick to respond, concise but complete
+
+How to respond:
+1. Greet warmly if it's a greeting ("Hello! How can I help you today?")
+2. Answer questions directly and clearly
+3. Use emojis sparingly but naturally 😊
+4. Keep responses under 3-4 sentences unless more detail is needed
+5. Use Nigerian English naturally ("How far?", "No wahala", etc.)`
+    
+    // Try to get knowledge base context, but don't fail if embeddings fail
+    let context: RAGContext
+    try {
+      context = await retrieveContext(userId, message)
+    } catch (error) {
+      console.log('Knowledge base unavailable, using direct AI response')
+      context = {
+        chunks: [],
+        systemPrompt
+      }
+    }
     
     return await generateRAGResponse(userId, message, context, temperature, conversationContext)
   } catch (error) {

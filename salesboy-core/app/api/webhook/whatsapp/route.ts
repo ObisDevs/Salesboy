@@ -153,10 +153,18 @@ export async function POST(request: NextRequest) {
           `${msg.direction === 'incoming' ? 'Customer' : 'You'}: ${msg.message_body}`
         ).join('\n') || ''
         
+        console.log('Calling processMessage with:', { actualUserId, message, hasContext: !!recentMessages })
         responseMessage = await processMessage(actualUserId, message, recentMessages)
-        console.log('✅ AI response generated')
-      } catch (error) {
+        console.log('✅ AI response generated:', responseMessage.substring(0, 50))
+      } catch (error: any) {
         console.error('❌ AI pipeline failed:', error)
+        console.error('Error details:', error.message, error.stack)
+        
+        // Check if API keys are configured
+        const hasGemini = !!process.env.GEMINI_API_KEY
+        const hasOpenAI = !!process.env.OPENAI_API_KEY
+        console.log('API Keys configured:', { hasGemini, hasOpenAI })
+        
         responseMessage = `Hello! Thanks for reaching out. I'm having a bit of trouble right now, but I'm here to help. Could you try asking again?`
       }
     }
