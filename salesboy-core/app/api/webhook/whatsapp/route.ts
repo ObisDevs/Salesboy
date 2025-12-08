@@ -21,11 +21,16 @@ export async function POST(request: NextRequest) {
     
     console.log('Webhook received:', { from, message, user_id, body })
     
+    // Map gateway user_id to actual UUID
+    const actualUserId = user_id === 'current-user' 
+      ? '00000000-0000-0000-0000-000000000001' 
+      : user_id
+    
     // Check if user exists
     const { data: profile } = await supabaseAdmin
       .from('profiles')
       .select('id')
-      .eq('id', user_id)
+      .eq('id', actualUserId)
       .single()
     
     if (!profile) {
@@ -36,7 +41,7 @@ export async function POST(request: NextRequest) {
     const { data: whitelist } = await supabaseAdmin
       .from('whitelists')
       .select('phone_number')
-      .eq('user_id', user_id)
+      .eq('user_id', actualUserId)
       .eq('phone_number', from)
       .single()
     
