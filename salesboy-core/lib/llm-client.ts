@@ -20,9 +20,12 @@ export async function generateResponse(
   systemPrompt?: string,
   temperature: number = 0.7
 ): Promise<LLMResponse> {
+  const errors: string[] = []
+  
   // Try Mistral first (fastest and cheapest)
   if (mistral) {
     try {
+      console.log('🔵 Trying Mistral...')
       const messages: any[] = []
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt })
@@ -36,18 +39,24 @@ export async function generateResponse(
         max_tokens: 500
       })
 
+      console.log('✅ Mistral succeeded')
       return {
         content: completion.choices[0].message.content || '',
         provider: 'mistral'
       }
-    } catch (error) {
-      console.error('Mistral failed:', error)
+    } catch (error: any) {
+      const errMsg = `Mistral: ${error.message}`
+      console.error('❌', errMsg)
+      errors.push(errMsg)
     }
+  } else {
+    errors.push('Mistral: API key not configured')
   }
 
   // Try Gemini second
   if (gemini) {
     try {
+      console.log('🟢 Trying Gemini...')
       const model = gemini.getGenerativeModel({ 
         model: 'gemini-pro',
         generationConfig: {
@@ -63,18 +72,24 @@ export async function generateResponse(
       const result = await model.generateContent(fullPrompt)
       const response = await result.response
       
+      console.log('✅ Gemini succeeded')
       return {
         content: response.text(),
         provider: 'gemini'
       }
-    } catch (error) {
-      console.error('Gemini failed:', error)
+    } catch (error: any) {
+      const errMsg = `Gemini: ${error.message}`
+      console.error('❌', errMsg)
+      errors.push(errMsg)
     }
+  } else {
+    errors.push('Gemini: API key not configured')
   }
 
   // Fallback to OpenAI
   if (openai) {
     try {
+      console.log('🟠 Trying OpenAI...')
       const messages: any[] = []
       if (systemPrompt) {
         messages.push({ role: 'system', content: systemPrompt })
@@ -88,14 +103,21 @@ export async function generateResponse(
         max_tokens: 500
       })
 
+      console.log('✅ OpenAI succeeded')
       return {
         content: completion.choices[0].message.content || '',
         provider: 'openai'
       }
-    } catch (error) {
-      console.error('OpenAI failed:', error)
+    } catch (error: any) {
+      const errMsg = `OpenAI: ${error.message}`
+      console.error('❌', errMsg)
+      errors.push(errMsg)
     }
+  } else {
+    errors.push('OpenAI: API key not configured')
   }
   
-  throw new Error('All LLM providers failed')
+  const errorDetails = errors.join(' | ')
+  console.error('🔴 All providers failed:', errorDetails)
+  throw new Error(`All LLM providers failed: ${errorDetails}`)
 }
