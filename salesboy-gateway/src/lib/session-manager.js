@@ -64,7 +64,7 @@ class SessionManager {
         const webhookUrl = process.env.NEXT_WEBHOOK_URL;
         if (webhookUrl) {
           const payload = {
-            user_id: '00000000-0000-0000-0000-000000000001',
+            user_id: userId,
             from: message.from,
             message: message.body,
             timestamp: message.timestamp
