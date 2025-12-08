@@ -47,9 +47,11 @@ export default function KnowledgeBasePage() {
       <div className="card">
         <div style={{ marginBottom: '1.5rem' }}>
           <label style={{ display: 'inline-block', cursor: 'pointer' }}>
-            <Button as="span" disabled={uploading}>
-              {uploading ? 'Uploading...' : 'Upload Document'}
-            </Button>
+            <span style={{ display: 'inline-block' }}>
+              <Button disabled={uploading}>
+                {uploading ? 'Uploading...' : 'Upload Document'}
+              </Button>
+            </span>
             <input
               type="file"
               onChange={uploadFile}
