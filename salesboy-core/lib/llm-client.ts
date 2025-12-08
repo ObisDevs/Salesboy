@@ -11,11 +11,21 @@ export interface LLMResponse {
 
 export async function generateResponse(
   prompt: string,
-  systemPrompt?: string
+  systemPrompt?: string,
+  temperature: number = 0.7
 ): Promise<LLMResponse> {
   // Try Gemini first
   try {
-    const model = gemini.getGenerativeModel({ model: 'gemini-pro' })
+    const model = gemini.getGenerativeModel({ 
+      model: 'gemini-pro',
+      generationConfig: {
+        temperature: temperature,
+        maxOutputTokens: 500,
+        topP: 0.9,
+        topK: 40
+      }
+    })
+    
     const fullPrompt = systemPrompt ? `${systemPrompt}\n\n${prompt}` : prompt
     
     const result = await model.generateContent(fullPrompt)
@@ -40,7 +50,8 @@ export async function generateResponse(
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
       messages,
-      temperature: 0.7
+      temperature: temperature,
+      max_tokens: 500
     })
 
     return {

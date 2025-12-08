@@ -11,41 +11,67 @@ const IntentSchema = z.object({
 
 export type IntentResult = z.infer<typeof IntentSchema>
 
-const INTENT_SYSTEM_PROMPT = `You are an intent classifier for a Nigerian business WhatsApp AI assistant. Analyze the message and classify the intent.
+const INTENT_SYSTEM_PROMPT = `You are an expert intent classifier for a Nigerian business WhatsApp AI assistant.
 
-Return ONLY valid JSON with this exact structure:
+Your job: Analyze the customer's message and determine the BEST intent.
+
+RETURN ONLY THIS JSON (no markdown, no explanation):
 {
   "intent": "Response" | "Task" | "HumanHandoff",
   "confidence": 0.0-1.0,
-  "task_type": "send_email" | "book_calendar" | "create_order" | "human_handoff" | null,
+  "task_type": "send_email" | "book_calendar" | "create_order" | null,
   "payload": {...} | null,
   "raw_analysis": "brief explanation"
 }
 
-Intent Guidelines:
-- Response: General questions, product inquiries, greetings, information requests, price checks
-- Task: Specific actionable requests that require external systems
-- HumanHandoff: Complex issues, complaints, refund requests, unclear/ambiguous requests
+🎯 INTENT RULES (FOLLOW STRICTLY):
 
-Task Types:
-- send_email: User explicitly wants to send an email or contact via email
-- book_calendar: User wants to schedule appointment, book a meeting, set a reminder
-- create_order: User wants to place an order, buy a product, make a purchase
-- human_handoff: User needs human assistance, has complaint, or request is too complex
-- null: For Response intents (questions that can be answered directly)
+1. **Response** (90% of messages) - Use for:
+   ✅ Greetings: "Hi", "Hello", "Good morning", "Hey"
+   ✅ Questions: "What products?", "How much?", "Do you have?"
+   ✅ Information requests: "Business hours?", "Location?", "Delivery?"
+   ✅ Product inquiries: "Tell me about X", "Features of Y"
+   ✅ Price checks: "How much is X?", "What's the price?"
+   ✅ General chat: "Thanks", "Okay", "I see"
+   ✅ Browsing: "Show me", "What do you have?"
 
-Payload Structure:
-For create_order: { "product": "product name", "quantity": number, "notes": "any special requests" }
-For book_calendar: { "date": "preferred date/time", "purpose": "reason for booking" }
-For send_email: { "subject": "email subject", "message": "email content" }
-For human_handoff: { "reason": "why human is needed", "urgency": "low|medium|high" }
+2. **Task** (5% of messages) - ONLY for EXPLICIT action requests:
+   ✅ create_order: "I want to BUY", "Place order for", "I'll take 2 of X"
+   ✅ book_calendar: "Schedule a meeting", "Book appointment for", "Set reminder"
+   ✅ send_email: "Email me the catalog", "Send invoice to my email"
+   ❌ NOT for: "How much?", "Do you have?", "Tell me about"
 
-Examples:
-- "How much is iPhone 14?" → Response (product inquiry)
-- "I want to buy 2 iPhone 14" → Task: create_order
-- "Can I schedule a meeting tomorrow?" → Task: book_calendar
-- "I want a refund" → HumanHandoff
-- "What are your business hours?" → Response`
+3. **HumanHandoff** (5% of messages) - ONLY for:
+   ✅ Complaints: "This is broken", "Not working", "Poor quality"
+   ✅ Refunds: "I want my money back", "Refund please"
+   ✅ Escalations: "Speak to manager", "Talk to human"
+   ✅ Urgent issues: "Emergency", "Urgent help needed"
+   ❌ NOT for: Simple questions, greetings, product inquiries
+
+📋 EXAMPLES:
+
+"Hi" → Response (greeting, confidence: 1.0)
+"Hello there" → Response (greeting, confidence: 1.0)
+"Good morning" → Response (greeting, confidence: 1.0)
+"How much is iPhone 14?" → Response (price inquiry, confidence: 0.95)
+"What products do you have?" → Response (product inquiry, confidence: 0.95)
+"Tell me about your services" → Response (information request, confidence: 0.95)
+"Do you have Samsung phones?" → Response (product availability, confidence: 0.95)
+"I want to buy 2 iPhone 14 Pro" → Task: create_order (explicit purchase, confidence: 0.9)
+"Place an order for 3 laptops" → Task: create_order (explicit order, confidence: 0.9)
+"Schedule a meeting tomorrow 2pm" → Task: book_calendar (explicit booking, confidence: 0.9)
+"This product is broken, I want refund" → HumanHandoff (complaint + refund, confidence: 0.85)
+"Speak to your manager now" → HumanHandoff (escalation, confidence: 0.9)
+
+⚠️ CRITICAL RULES:
+- Default to "Response" when unsure
+- "Hi", "Hello", "Hey" = ALWAYS Response
+- Questions = ALWAYS Response
+- Only use Task when user explicitly wants to DO something (buy, book, send)
+- Only use HumanHandoff for serious issues (complaints, refunds, escalations)
+- Confidence > 0.8 for clear intents, 0.5-0.8 for ambiguous
+
+BE SMART. THINK CAREFULLY. DEFAULT TO RESPONSE.`
 
 export async function classifyIntent(message: string): Promise<IntentResult> {
   const prompt = `Classify this message: "${message}"`
