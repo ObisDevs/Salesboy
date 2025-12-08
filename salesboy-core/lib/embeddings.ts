@@ -1,30 +1,26 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
 import OpenAI from 'openai'
 
-const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! })
+const mistral = process.env.MISTRAL_API_KEY ? new OpenAI({
+  apiKey: process.env.MISTRAL_API_KEY,
+  baseURL: 'https://api.mistral.ai/v1'
+}) : null
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // Try Gemini first
-  try {
-    const model = gemini.getGenerativeModel({ model: 'embedding-001' })
-    const result = await model.embedContent(text)
-    return result.embedding.values
-  } catch (error) {
-    console.error('Gemini embedding failed:', error)
+  // Use Mistral embeddings (1536 dimensions, same as OpenAI)
+  if (mistral) {
+    try {
+      const response = await mistral.embeddings.create({
+        model: 'mistral-embed',
+        input: text
+      })
+      return response.data[0].embedding
+    } catch (error) {
+      console.error('Mistral embedding failed:', error)
+      throw error
+    }
   }
-
-  // Fallback to OpenAI
-  try {
-    const response = await openai.embeddings.create({
-      model: 'text-embedding-ada-002',
-      input: text
-    })
-    return response.data[0].embedding
-  } catch (error) {
-    console.error('OpenAI embedding failed:', error)
-    throw new Error('All embedding providers failed')
-  }
+  
+  throw new Error('MISTRAL_API_KEY not configured')
 }
 
 export function chunkText(text: string, maxTokens: number = 500): string[] {
