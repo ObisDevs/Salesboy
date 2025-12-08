@@ -39,6 +39,30 @@ export async function POST(request: NextRequest) {
       throw dbError
     }
     
+    // Get user's n8n webhook from profile
+    const { data: profile } = await supabaseAdmin
+      .from('profiles')
+      .select('metadata')
+      .eq('id', USER_ID)
+      .single()
+    
+    const n8nWebhook = profile?.metadata?.n8n_kb_webhook
+    if (n8nWebhook) {
+      fetch(n8nWebhook, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          file_id: kbEntry.id,
+          user_id: USER_ID,
+          filename: file.name,
+          file_path: uploadData.path,
+          mime_type: file.type,
+          supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+          bucket: 'knowledge-base'
+        })
+      }).catch(err => console.error('n8n webhook failed:', err))
+    }
+    
     return NextResponse.json({ data: kbEntry })
   } catch (error: any) {
     console.error('Upload error:', error)

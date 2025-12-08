@@ -34,7 +34,6 @@ export default function KnowledgeBasePage() {
     formData.append('file', file)
 
     try {
-      // Step 1: Upload
       const uploadRes = await fetch('/api/kb/upload', {
         method: 'POST',
         body: formData
@@ -45,35 +44,7 @@ export default function KnowledgeBasePage() {
         return
       }
 
-      const fileId = uploadResult.data.id
-      showToast('Processing document...', 'success')
-
-      // Step 2: Process
-      const processRes = await fetch('/api/kb/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: fileId })
-      })
-      if (!processRes.ok) {
-        showToast('Processing failed', 'error')
-        return
-      }
-
-      showToast('Embedding document...', 'success')
-
-      // Step 3: Embed
-      const embedRes = await fetch('/api/kb/embed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: fileId })
-      })
-      const embedResult = await embedRes.json()
-      if (!embedRes.ok) {
-        showToast('Embedding failed: ' + embedResult.error, 'error')
-        return
-      }
-
-      showToast(`✅ Document ready! ${embedResult.vectors} chunks embedded`, 'success')
+      showToast('✅ Document uploaded! Processing in background...', 'success')
       await fetchFiles()
     } catch (error) {
       showToast('Upload failed', 'error')
@@ -84,7 +55,7 @@ export default function KnowledgeBasePage() {
   }
 
   const deleteFile = async (id: string) => {
-    if (!confirm('Delete this file?')) return
+    if (!confirm('Delete this file and its embeddings?')) return
     try {
       const res = await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
       const result = await res.json()
@@ -92,7 +63,7 @@ export default function KnowledgeBasePage() {
         showToast('Delete failed: ' + result.error, 'error')
       } else {
         showToast('File deleted', 'success')
-        await fetchFiles() // Refresh list
+        await fetchFiles()
       }
     } catch (error) {
       showToast('Failed to delete file', 'error')
@@ -137,11 +108,31 @@ export default function KnowledgeBasePage() {
               <div>
                 <div style={{ fontWeight: '500' }}>{file.filename}</div>
                 <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-                  {(file.file_size / 1024).toFixed(2)} KB • {file.status}
+                  {(file.file_size / 1024).toFixed(2)} KB • 
+                  <span style={{ 
+                    color: file.status === 'embedded' ? '#10b981' : file.status === 'failed' ? '#ef4444' : '#f59e0b',
+                    fontWeight: '500'
+                  }}>
+                    {file.status === 'embedded' ? '✓ Embedded' : file.status === 'failed' ? '✗ Failed' : '⏳ ' + file.status}
+                  </span>
                 </div>
               </div>
               <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <Button onClick={() => setPreview({ url: file.file_path, name: file.filename, type: file.mime_type })}>Preview</Button>
+                {file.status !== 'embedded' && (
+                  <Button onClick={async () => {
+                    try {
+                      await fetch('/api/kb/trigger-embed', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ file_id: file.id })
+                      })
+                      showToast('Embedding triggered', 'success')
+                      setTimeout(fetchFiles, 2000)
+                    } catch (error) {
+                      showToast('Failed to trigger embedding', 'error')
+                    }
+                  }}>Embed</Button>
+                )}
                 <Button onClick={() => deleteFile(file.id)} style={{ background: '#dc2626' }}>Delete</Button>
               </div>
             </div>
