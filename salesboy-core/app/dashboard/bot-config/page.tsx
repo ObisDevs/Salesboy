@@ -6,12 +6,7 @@ import { LoadingSpinner } from '@/app/components/ui/loading'
 import { useToast } from '@/app/components/ui/toast'
 
 export default function BotConfigPage() {
-  const [config, setConfig] = useState({
-    system_prompt: '',
-    temperature: 0.7,
-    model: 'gemini-pro',
-    max_tokens: 500
-  })
+  const [config, setConfig] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const { showToast } = useToast()
@@ -20,14 +15,7 @@ export default function BotConfigPage() {
     fetch('/api/bot-config')
       .then(r => r.json())
       .then(d => {
-        if (d.data) {
-          setConfig({
-            system_prompt: d.data.system_prompt || '',
-            temperature: d.data.temperature ?? 0.7,
-            model: d.data.model || 'mistral-small',
-            max_tokens: d.data.max_tokens || 500
-          })
-        }
+        setConfig(d.data)
         setLoading(false)
       })
       .catch(() => {
@@ -54,7 +42,7 @@ export default function BotConfigPage() {
     }
   }
 
-  if (loading) {
+  if (loading || !config) {
     return (
       <>
         <DashboardHeader title="Bot Configuration" description="Configure AI behavior" />
@@ -76,9 +64,9 @@ export default function BotConfigPage() {
               System Prompt
             </label>
             <textarea
-              value={config.system_prompt}
+              value={config.system_prompt || ''}
               onChange={(e) => setConfig({ ...config, system_prompt: e.target.value })}
-              rows={6}
+              rows={8}
               style={{ 
                 width: '100%', 
                 padding: '0.75rem', 
@@ -88,7 +76,7 @@ export default function BotConfigPage() {
                 fontFamily: 'monospace',
                 fontSize: '0.875rem'
               }}
-              placeholder="You are a helpful AI assistant..."
+              placeholder="You are a friendly AI sales assistant for a Nigerian business. Be warm, professional, and helpful. Use Nigerian expressions naturally."
             />
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
               Define how the AI should behave and respond to customers
@@ -101,7 +89,7 @@ export default function BotConfigPage() {
                 Model
               </label>
               <select
-                value={config.model}
+                value={config.model || 'mistral-small-latest'}
                 onChange={(e) => setConfig({ ...config, model: e.target.value })}
                 style={{ 
                   width: '100%', 
@@ -111,11 +99,9 @@ export default function BotConfigPage() {
                   background: 'var(--bg-primary)' 
                 }}
               >
-                <option value="mistral-small">Mistral Small (Fast & Cheap)</option>
-                <option value="mistral-medium">Mistral Medium</option>
-                <option value="gemini-pro">Gemini Pro</option>
-                <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
-                <option value="gpt-4">GPT-4 (Expensive)</option>
+                <option value="mistral-small-latest">Mistral Small (Primary)</option>
+                <option value="mistral-medium-latest">Mistral Medium</option>
+                <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Groq)</option>
               </select>
             </div>
 
@@ -128,7 +114,7 @@ export default function BotConfigPage() {
                 min="0"
                 max="1"
                 step="0.1"
-                value={config.temperature}
+                value={config.temperature ?? 0.7}
                 onChange={(e) => setConfig({ ...config, temperature: parseFloat(e.target.value) })}
                 style={{ width: '100%' }}
               />
@@ -143,7 +129,7 @@ export default function BotConfigPage() {
               </label>
               <input
                 type="number"
-                value={config.max_tokens}
+                value={config.max_tokens || 500}
                 onChange={(e) => setConfig({ ...config, max_tokens: parseInt(e.target.value) })}
                 min="100"
                 max="2000"

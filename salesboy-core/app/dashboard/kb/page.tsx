@@ -38,26 +38,32 @@ export default function KnowledgeBasePage() {
         method: 'POST',
         body: formData
       })
+      const result = await res.json()
       if (!res.ok) {
-        const error = await res.json()
-        showToast('Upload failed: ' + error.error, 'error')
+        showToast('Upload failed: ' + result.error, 'error')
       } else {
-        await fetchFiles()
         showToast('File uploaded successfully', 'success')
+        await fetchFiles() // Refresh list
       }
     } catch (error) {
       showToast('Upload failed', 'error')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
     }
-    setUploading(false)
-    e.target.value = ''
   }
 
   const deleteFile = async (id: string) => {
     if (!confirm('Delete this file?')) return
     try {
-      await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
-      fetchFiles()
-      showToast('File deleted', 'success')
+      const res = await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
+      const result = await res.json()
+      if (!res.ok) {
+        showToast('Delete failed: ' + result.error, 'error')
+      } else {
+        showToast('File deleted', 'success')
+        await fetchFiles() // Refresh list
+      }
     } catch (error) {
       showToast('Failed to delete file', 'error')
     }

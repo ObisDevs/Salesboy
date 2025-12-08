@@ -3,6 +3,8 @@ import { supabaseAdmin } from '@/lib/supabase'
 
 const USER_ID = '00000000-0000-0000-0000-000000000001'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
@@ -12,8 +14,10 @@ export async function GET() {
       .order('created_at', { ascending: false })
 
     if (error) throw error
+    console.log('KB list fetched:', data?.length, 'files')
     return NextResponse.json({ data })
   } catch (error: any) {
+    console.error('KB list error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

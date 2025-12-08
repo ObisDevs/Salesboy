@@ -9,28 +9,46 @@ export async function DELETE(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
 
+    if (!id) {
+      return NextResponse.json({ error: 'ID required' }, { status: 400 })
+    }
+
+    console.log('Deleting KB file:', id)
+
+    // Get file info
     const { data: file } = await supabaseAdmin
       .from('knowledge_base')
       .select('file_path')
       .eq('id', id)
       .single()
 
-    if (file) {
+    // Delete from storage
+    if (file?.file_path) {
       const supabase = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
         process.env.SUPABASE_SERVICE_ROLE_KEY!
       )
-      await supabase.storage.from('knowledge-base').remove([file.file_path])
+      const { error: storageError } = await supabase.storage
+        .from('knowledge-base')
+        .remove([file.file_path])
+      
+      if (storageError) {
+        console.error('Storage delete error:', storageError)
+      }
     }
 
+    // Delete from database
     const { error } = await supabaseAdmin
       .from('knowledge_base')
       .delete()
       .eq('id', id)
 
     if (error) throw error
+    
+    console.log('KB file deleted successfully')
     return NextResponse.json({ success: true })
   } catch (error: any) {
+    console.error('Delete error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
