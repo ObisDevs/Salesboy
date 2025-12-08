@@ -9,13 +9,27 @@ export function generateHmac(payload: string): string {
 }
 
 export function validateHmac(payload: string, signature: string): boolean {
-  const expectedSignature = generateHmac(payload)
-  const providedSignature = signature.startsWith('sha256=') 
-    ? signature.slice(7) 
-    : signature
+  if (!HMAC_SECRET) {
+    console.warn('HMAC_SECRET not configured, skipping validation')
+    return true
+  }
   
-  return timingSafeEqual(
-    Buffer.from(expectedSignature, 'hex'),
-    Buffer.from(providedSignature, 'hex')
-  )
+  try {
+    const expectedSignature = generateHmac(payload)
+    const providedSignature = signature.startsWith('sha256=') 
+      ? signature.slice(7) 
+      : signature
+    
+    const expectedBuffer = Buffer.from(expectedSignature, 'hex')
+    const providedBuffer = Buffer.from(providedSignature, 'hex')
+    
+    if (expectedBuffer.length !== providedBuffer.length) {
+      return false
+    }
+    
+    return timingSafeEqual(expectedBuffer, providedBuffer)
+  } catch (error) {
+    console.error('HMAC validation error:', error)
+    return false
+  }
 }
