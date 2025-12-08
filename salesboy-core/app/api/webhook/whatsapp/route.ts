@@ -51,13 +51,17 @@ export async function POST(request: NextRequest) {
     }
     
     // Log incoming message
-    await supabaseAdmin.from('chat_logs').insert({
+    const { error: logError } = await supabaseAdmin.from('chat_logs').insert({
       user_id: actualUserId,
       from_number: from,
       message_body: message,
       encrypted_payload: message,
       direction: 'incoming'
     })
+    
+    if (logError) {
+      console.error('Failed to log incoming message:', logError)
+    }
     
     const response = `Hello! I received your message: "${message}". This is a test response from Salesboy AI.`
     
@@ -66,13 +70,17 @@ export async function POST(request: NextRequest) {
       await sendMessage({ userId: user_id, to: from, message: response })
       
       // Log outgoing message
-      await supabaseAdmin.from('chat_logs').insert({
+      const { error: outLogError } = await supabaseAdmin.from('chat_logs').insert({
         user_id: actualUserId,
         from_number: from,
         message_body: response,
         encrypted_payload: response,
         direction: 'outgoing'
       })
+      
+      if (outLogError) {
+        console.error('Failed to log outgoing message:', outLogError)
+      }
     } catch (error) {
       console.error('Failed to send message:', error)
     }
