@@ -1,7 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const gemini = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
-
 // Pad vector to 1536 dimensions
 function padTo1536(vector: number[]): number[] {
   if (vector.length === 1536) return vector
@@ -10,38 +6,50 @@ function padTo1536(vector: number[]): number[] {
 }
 
 export async function generateEmbedding(text: string): Promise<number[]> {
-  // Try Voyage AI first (free, 1536 dimensions)
+  // Use Hugging Face Inference API (free, no key needed for public models)
   try {
-    const response = await fetch('https://api.voyageai.com/v1/embeddings', {
+    const response = await fetch(
+      'https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ inputs: text })
+      }
+    )
+    
+    if (response.ok) {
+      const embedding = await response.json()
+      // all-MiniLM-L6-v2 produces 384 dimensions, pad to 1536
+      return padTo1536(embedding)
+    }
+    
+    const errorText = await response.text()
+    console.error('Hugging Face error:', errorText)
+  } catch (error) {
+    console.error('Hugging Face failed:', error)
+  }
+
+  // Fallback: Use Jina AI (free, no key needed)
+  try {
+    const response = await fetch('https://api.jina.ai/v1/embeddings', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.VOYAGE_API_KEY || 'pa-'}`
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        input: text,
-        model: 'voyage-2'
+        input: [text],
+        model: 'jina-embeddings-v2-base-en'
       })
     })
     
     if (response.ok) {
       const data = await response.json()
-      return data.data[0].embedding
+      const embedding = data.data[0].embedding
+      return padTo1536(embedding)
     }
   } catch (error) {
-    console.log('Voyage AI failed, trying Gemini:', error)
+    console.error('Jina AI failed:', error)
   }
 
-  // Fallback to Gemini (768 dimensions, padded to 1536)
-  try {
-    const model = gemini.getGenerativeModel({ model: 'embedding-001' })
-    const result = await model.embedContent(text)
-    const embedding = result.embedding.values
-    return padTo1536(embedding)
-  } catch (error) {
-    console.error('Gemini embedding failed:', error)
-    throw new Error('All embedding providers failed')
-  }
+  throw new Error('All embedding providers failed. Please check your internet connection.')
 }
 
 export function chunkText(text: string, maxTokens: number = 500): string[] {
