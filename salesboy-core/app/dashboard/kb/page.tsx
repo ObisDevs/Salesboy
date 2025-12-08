@@ -64,16 +64,22 @@ export default function KnowledgeBasePage() {
   const deleteFile = async (id: string) => {
     if (!confirm('Delete this file and its embeddings?')) return
     try {
+      // Immediately remove from UI
+      setFiles(prev => prev.filter(f => f.id !== id))
+      
       const res = await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
       const result = await res.json()
       if (!res.ok) {
         showToast('Delete failed: ' + result.error, 'error')
+        // Restore on error
+        await fetchFiles()
       } else {
         showToast('File deleted', 'success')
-        await fetchFiles()
       }
     } catch (error) {
       showToast('Failed to delete file', 'error')
+      // Restore on error
+      await fetchFiles()
     }
   }
 
