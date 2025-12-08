@@ -65,13 +65,13 @@ export async function classifyIntent(message: string): Promise<IntentResult> {
       console.error(`Intent classification attempt ${attempts} failed:`, error)
       
       if (attempts >= maxAttempts) {
-        // Fallback to human handoff
+        // Fallback to Response
         return {
-          intent: 'HumanHandoff',
+          intent: 'Response',
           confidence: 0.1,
           task_type: null,
           payload: null,
-          raw_analysis: 'Classification failed, routing to human'
+          raw_analysis: 'Classification failed, using fallback'
         }
       }
     }

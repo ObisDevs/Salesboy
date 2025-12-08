@@ -144,25 +144,6 @@ export async function POST(request: NextRequest) {
         responseMessage = "I understand you want me to help with that, but I'm having trouble processing your request right now. Let me connect you with someone who can assist."
       }
       
-    } else if (intent.intent === 'HumanHandoff') {
-      // Human handoff - notify and forward
-      console.log('👤 Human handoff requested')
-      
-      try {
-        await forwardTaskToN8n({
-          task_type: 'human_handoff',
-          payload: { reason: intent.raw_analysis, message },
-          user_id: actualUserId,
-          from_number: from,
-          original_message: message
-        })
-        
-        responseMessage = "I've notified our team about your request. Someone will get back to you shortly. Thank you for your patience!"
-      } catch (error) {
-        console.error('❌ Failed to forward handoff:', error)
-        responseMessage = "Let me connect you with our team. Please hold on."
-      }
-      
     } else {
       // Response intent - use RAG pipeline with conversation context
       console.log('💬 Generating AI response...')
