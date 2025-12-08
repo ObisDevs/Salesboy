@@ -61,21 +61,38 @@ export async function POST(request: NextRequest) {
       direction: 'incoming'
     })
     
-    // STEP 1: Classify Intent
-    console.log('🧠 Classifying intent...')
+    // STEP 1: Quick check for greetings (skip AI classification)
+    const lowerMessage = message.toLowerCase().trim()
+    const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening|greetings|howdy|sup|what's up|whatsup)\b/i.test(lowerMessage)
+    
     let intent
-    try {
-      intent = await classifyIntent(message)
-      console.log('✅ Intent classified:', intent)
-    } catch (error) {
-      console.error('❌ Intent classification failed:', error)
-      // Fallback to Response intent
+    
+    if (isGreeting) {
+      // Force Response intent for greetings
+      console.log('👋 Greeting detected, skipping classification')
       intent = {
         intent: 'Response',
-        confidence: 0.5,
+        confidence: 1.0,
         task_type: null,
         payload: null,
-        raw_analysis: 'Classification failed, using fallback'
+        raw_analysis: 'Greeting detected'
+      }
+    } else {
+      // STEP 1: Classify Intent
+      console.log('🧠 Classifying intent...')
+      try {
+        intent = await classifyIntent(message)
+        console.log('✅ Intent classified:', intent)
+      } catch (error) {
+        console.error('❌ Intent classification failed:', error)
+        // Fallback to Response intent
+        intent = {
+          intent: 'Response',
+          confidence: 0.5,
+          task_type: null,
+          payload: null,
+          raw_analysis: 'Classification failed, using fallback'
+        }
       }
     }
     
