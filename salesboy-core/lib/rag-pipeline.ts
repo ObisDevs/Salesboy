@@ -17,11 +17,19 @@ export async function retrieveContext(
   query: string,
   topK: number = 5
 ): Promise<RAGContext> {
+  console.log('🔍 Retrieving context for query:', query.substring(0, 50))
+  
   // Generate query embedding
   const queryEmbedding = await generateEmbedding(query)
+  console.log('✅ Query embedding generated:', queryEmbedding.length, 'dimensions')
   
   // Search Pinecone
   const searchResults = await queryVectors(userId, queryEmbedding, topK)
+  console.log('📊 Pinecone results:', {
+    matches: searchResults.matches?.length || 0,
+    namespace: `user_${userId}`,
+    topScores: searchResults.matches?.slice(0, 3).map(m => m.score)
+  })
   
   // Get user's bot config
   const { data: botConfig } = await supabaseAdmin
@@ -35,6 +43,11 @@ export async function retrieveContext(
     filename: match.metadata?.filename as string || '',
     relevance: match.score || 0
   })) || []
+  
+  console.log('📚 Knowledge base chunks:', chunks.length, 'chunks retrieved')
+  if (chunks.length > 0) {
+    console.log('Top chunk preview:', chunks[0].text.substring(0, 100))
+  }
   
   console.log('Bot config in retrieveContext:', { hasConfig: !!botConfig, prompt: botConfig?.system_prompt?.substring(0, 50) })
   
