@@ -22,7 +22,11 @@ export default function KnowledgeBasePage() {
   const fetchFiles = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/kb/list')
+      // Add cache busting to force fresh data
+      const res = await fetch('/api/kb/list?t=' + Date.now(), {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' }
+      })
       const { data } = await res.json()
       setFiles(data || [])
     } catch (error) {
