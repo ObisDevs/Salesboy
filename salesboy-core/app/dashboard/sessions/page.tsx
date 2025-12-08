@@ -146,8 +146,21 @@ export default function SessionsPage() {
           </span>
         </div>
         {sessionStatus && (
-          <div style={{ marginBottom: '1rem', padding: '0.5rem', background: 'var(--bg-secondary)', borderRadius: '4px', fontSize: '0.875rem' }}>
-            <pre>{JSON.stringify(sessionStatus, null, 2)}</pre>
+          <div style={{ marginBottom: '1rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '150px 1fr', gap: '0.75rem', fontSize: '0.875rem' }}>
+              <div style={{ fontWeight: '500' }}>Gateway Status:</div>
+              <div>{sessionStatus.gateway_status?.exists ? '✅ Connected' : '❌ Not Connected'}</div>
+              
+              <div style={{ fontWeight: '500' }}>Ready:</div>
+              <div>{sessionStatus.gateway_status?.ready ? '✅ Yes' : '⏳ Waiting'}</div>
+              
+              {sessionStatus.db_status && (
+                <>
+                  <div style={{ fontWeight: '500' }}>DB Status:</div>
+                  <div>{sessionStatus.db_status.status}</div>
+                </>
+              )}
+            </div>
           </div>
         )}
         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
@@ -176,14 +189,17 @@ export default function SessionsPage() {
 
       {qrCode && (
         <div className="card">
-          <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
-            Scan QR Code
-          </h2>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '500', color: 'var(--accent)' }}>
+              Scan QR Code
+            </h2>
+            <Button onClick={() => setQrCode('')} style={{ background: '#6b7280' }}>Hide QR</Button>
+          </div>
           <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
             Open WhatsApp on your phone and scan this QR code
           </p>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <img src={qrCode} alt="WhatsApp QR Code" style={{ maxWidth: '300px', border: '2px solid var(--border)' }} />
+            <img src={qrCode} alt="WhatsApp QR Code" style={{ maxWidth: '300px', border: '2px solid var(--border)', borderRadius: '8px' }} />
           </div>
         </div>
       )}

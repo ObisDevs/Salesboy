@@ -50,15 +50,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Message ignored - not whitelisted' })
     }
     
-    // Simple test response (bypassing AI for now)
+    // Log incoming message
+    await supabaseAdmin.from('chat_logs').insert({
+      user_id: actualUserId,
+      from_number: from,
+      message_body: message,
+      encrypted_payload: message,
+      direction: 'incoming'
+    })
+    
     const response = `Hello! I received your message: "${message}". This is a test response from Salesboy AI.`
     
-    // Send response back via gateway
+    // Send response
     try {
-      await sendMessage({
-        userId: user_id,
-        to: from,
-        message: response
+      await sendMessage({ userId: user_id, to: from, message: response })
+      
+      // Log outgoing message
+      await supabaseAdmin.from('chat_logs').insert({
+        user_id: actualUserId,
+        from_number: from,
+        message_body: response,
+        encrypted_payload: response,
+        direction: 'outgoing'
       })
     } catch (error) {
       console.error('Failed to send message:', error)
