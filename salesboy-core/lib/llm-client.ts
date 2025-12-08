@@ -58,7 +58,7 @@ export async function generateResponse(
     try {
       console.log('🟢 Trying Gemini...')
       const model = gemini.getGenerativeModel({ 
-        model: 'gemini-1.5-flash-latest',
+        model: 'models/gemini-pro',
         generationConfig: {
           temperature: temperature,
           maxOutputTokens: 500,
