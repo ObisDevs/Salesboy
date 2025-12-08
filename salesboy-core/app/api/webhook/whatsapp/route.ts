@@ -34,10 +34,13 @@ export async function POST(request: NextRequest) {
       .single()
     
     if (!profile) {
+      console.log('User not found:', actualUserId)
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
     
-    // Check whitelist
+    console.log('Processing message from:', from, 'message:', message)
+    
+    // Check whitelist (numbers IN whitelist are IGNORED)
     const { data: whitelist } = await supabaseAdmin
       .from('whitelists')
       .select('phone_number')
@@ -45,9 +48,9 @@ export async function POST(request: NextRequest) {
       .eq('phone_number', from)
       .single()
     
-    if (!whitelist) {
-      console.log(`Message from non-whitelisted number: ${from}`)
-      return NextResponse.json({ message: 'Message ignored - not whitelisted' })
+    if (whitelist) {
+      console.log(`Message from whitelisted number (ignored): ${from}`)
+      return NextResponse.json({ message: 'Message ignored - in whitelist' })
     }
     
     // Log incoming message
