@@ -1,74 +1,83 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/app/components/ui/button'
-import { Input } from '@/app/components/ui/input'
 import DashboardHeader from '@/app/components/DashboardHeader'
-import { useToast } from '@/app/components/ui/toast'
 
 export default function KnowledgeBasePage() {
+  const [files, setFiles] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
-  const { showToast } = useToast()
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fetchFiles = async () => {
+    const res = await fetch('/api/kb/list')
+    const { data } = await res.json()
+    setFiles(data || [])
+  }
+
+  const uploadFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     setUploading(true)
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('user_id', 'current-user')
 
-    try {
-      const res = await fetch('/api/kb/upload', {
-        method: 'POST',
-        body: formData
-      })
-      const data = await res.json()
-      
-      await fetch('/api/kb/process', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: data.file_id })
-      })
+    await fetch('/api/kb/upload', {
+      method: 'POST',
+      body: formData
+    })
 
-      await fetch('/api/kb/embed', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ file_id: data.file_id })
-      })
-
-      showToast('Document uploaded successfully', 'success')
-    } catch (error) {
-      showToast('Failed to upload document', 'error')
-    }
+    fetchFiles()
     setUploading(false)
   }
 
+  const deleteFile = async (id: string) => {
+    if (!confirm('Delete this file?')) return
+    await fetch(`/api/kb/delete?id=${id}`, { method: 'DELETE' })
+    fetchFiles()
+  }
+
+  useEffect(() => {
+    fetchFiles()
+  }, [])
+
   return (
     <>
-      <DashboardHeader 
-        title="Knowledge Base" 
-        description="Upload and manage documents for AI training" 
-      />
+      <DashboardHeader title="Knowledge Base" description="Upload documents for AI context" />
+      
+      <div className="card">
+        <div style={{ marginBottom: '1.5rem' }}>
+          <label style={{ display: 'inline-block', cursor: 'pointer' }}>
+            <Button as="span" disabled={uploading}>
+              {uploading ? 'Uploading...' : 'Upload Document'}
+            </Button>
+            <input
+              type="file"
+              onChange={uploadFile}
+              accept=".pdf,.doc,.docx,.txt"
+              style={{ display: 'none' }}
+              disabled={uploading}
+            />
+          </label>
+        </div>
 
-      <div className="card" style={{ borderTop: '3px solid var(--accent)' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
-          Upload Document
-        </h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-          Supported formats: PDF, DOCX, TXT
-        </p>
-        <Input
-          type="file"
-          accept=".pdf,.docx,.txt"
-          onChange={handleUpload}
-          disabled={uploading}
-        />
-        {uploading && (
-          <p style={{ marginTop: '1rem', color: 'var(--accent)' }}>
-            Processing document...
-          </p>
-        )}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {files.map((file) => (
+            <div key={file.id} style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontWeight: '500' }}>{file.filename}</div>
+                <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                  {(file.file_size / 1024).toFixed(2)} KB • {file.status}
+                </div>
+              </div>
+              <Button onClick={() => deleteFile(file.id)} style={{ background: '#dc2626' }}>Delete</Button>
+            </div>
+          ))}
+          {files.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+              No documents uploaded yet.
+            </div>
+          )}
+        </div>
       </div>
     </>
   )

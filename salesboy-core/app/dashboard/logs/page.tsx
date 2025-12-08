@@ -1,47 +1,50 @@
 'use client'
-import { useState } from 'react'
-import { Input } from '@/app/components/ui/input'
+import { useState, useEffect } from 'react'
 import DashboardHeader from '@/app/components/DashboardHeader'
 
 export default function LogsPage() {
-  const [search, setSearch] = useState('')
-  const logs: any[] = []
+  const [logs, setLogs] = useState<any[]>([])
+
+  const fetchLogs = async () => {
+    const res = await fetch('/api/logs')
+    const { data } = await res.json()
+    setLogs(data || [])
+  }
+
+  useEffect(() => {
+    fetchLogs()
+    const interval = setInterval(fetchLogs, 5000)
+    return () => clearInterval(interval)
+  }, [])
 
   return (
     <>
-      <DashboardHeader 
-        title="Activity Logs" 
-        description="View chat and audit logs" 
-      />
-
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <Input
-          type="search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search logs..."
-        />
-      </div>
-
+      <DashboardHeader title="Message Logs" description="View conversation history" />
+      
       <div className="card">
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
-          Recent Activity
-        </h2>
-        {logs.length === 0 ? (
-          <p style={{ color: 'var(--text-muted)' }}>No logs available</p>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {logs.map((log, i) => (
-              <div key={i} style={{ padding: '1rem', background: 'var(--bg-tertiary)', borderRadius: '8px', borderLeft: '3px solid var(--accent)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: '500' }}>{log.type}</span>
-                  <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{log.timestamp}</span>
-                </div>
-                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{log.message}</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          {logs.map((log) => (
+            <div key={log.id} style={{ padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ fontWeight: '500', color: log.direction === 'incoming' ? 'var(--accent)' : 'var(--success)' }}>
+                  {log.direction === 'incoming' ? '← Incoming' : '→ Outgoing'}
+                </span>
+                <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                  {new Date(log.timestamp).toLocaleString()}
+                </span>
               </div>
-            ))}
-          </div>
-        )}
+              <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                {log.from_number}
+              </div>
+              <div>{log.message_body}</div>
+            </div>
+          ))}
+          {logs.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+              No messages yet.
+            </div>
+          )}
+        </div>
       </div>
     </>
   )

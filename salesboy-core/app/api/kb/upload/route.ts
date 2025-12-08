@@ -1,37 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 
+const USER_ID = '00000000-0000-0000-0000-000000000001'
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get('file') as File
-    const user_id = formData.get('user_id') as string
     
-    if (!file || !user_id) {
-      return NextResponse.json({ error: 'File and user_id required' }, { status: 400 })
+    if (!file) {
+      return NextResponse.json({ error: 'File required' }, { status: 400 })
     }
     
-    // Upload to Supabase Storage
-    const fileName = `${user_id}/${Date.now()}_${file.name}`
+    const buffer = Buffer.from(await file.arrayBuffer())
+    const fileName = `${USER_ID}/${Date.now()}_${file.name}`
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
       .from('knowledge-base')
-      .upload(fileName, file)
+      .upload(fileName, buffer, { contentType: file.type })
     
     if (uploadError) {
       throw uploadError
     }
     
-    // Save metadata to database
     const { data: kbEntry, error: dbError } = await supabaseAdmin
       .from('knowledge_base')
       .insert({
-        user_id,
+        user_id: USER_ID,
         filename: file.name,
         file_path: uploadData.path,
         file_size: file.size,
         mime_type: file.type,
-        status: 'uploaded',
-        uploaded_at: new Date().toISOString()
+        status: 'uploaded'
       })
       .select()
       .single()
@@ -40,13 +39,9 @@ export async function POST(request: NextRequest) {
       throw dbError
     }
     
-    return NextResponse.json({
-      message: 'File uploaded successfully',
-      file_id: kbEntry.id,
-      filename: file.name
-    })
-  } catch (error) {
+    return NextResponse.json({ data: kbEntry })
+  } catch (error: any) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 })
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

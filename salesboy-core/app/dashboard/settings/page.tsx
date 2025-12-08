@@ -1,72 +1,64 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/app/components/ui/button'
 import DashboardHeader from '@/app/components/DashboardHeader'
-import { useToast } from '@/app/components/ui/toast'
 
 export default function SettingsPage() {
-  const [systemPrompt, setSystemPrompt] = useState('You are a helpful business assistant.')
-  const [temperature, setTemperature] = useState(0.7)
-  const [saving, setSaving] = useState(false)
-  const { showToast } = useToast()
+  const [profile, setProfile] = useState({ full_name: '', phone_number: '', email: '' })
+  const [loading, setLoading] = useState(false)
 
-  const saveSettings = async () => {
-    setSaving(true)
-    setTimeout(() => {
-      setSaving(false)
-      showToast('Settings saved successfully', 'success')
-    }, 1000)
+  useEffect(() => {
+    fetch('/api/profile').then(r => r.json()).then(d => setProfile(d.data || {}))
+  }, [])
+
+  const saveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    })
+    setLoading(false)
   }
 
   return (
     <>
-      <DashboardHeader 
-        title="Bot Settings" 
-        description="Configure AI behavior and responses" 
-      />
-
-      <div className="card" style={{ marginBottom: '2rem', borderTop: '3px solid var(--accent)' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
-          System Prompt
-        </h2>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.875rem' }}>
-          Define how the AI should behave and respond
-        </p>
-        <textarea
-          value={systemPrompt}
-          onChange={(e) => setSystemPrompt(e.target.value)}
-          className="input"
-          rows={6}
-          style={{ width: '100%', resize: 'vertical' }}
-        />
+      <DashboardHeader title="Settings" description="Configure your profile" />
+      
+      <div className="card">
+        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: '500' }}>Profile Settings</h2>
+        <form onSubmit={saveProfile}>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Full Name</label>
+            <input
+              type="text"
+              value={profile.full_name || ''}
+              onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)' }}
+            />
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Phone Number</label>
+            <input
+              type="text"
+              value={profile.phone_number || ''}
+              onChange={(e) => setProfile({ ...profile, phone_number: e.target.value })}
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)' }}
+            />
+          </div>
+          <div style={{ marginBottom: '1.5rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Email</label>
+            <input
+              type="email"
+              value={profile.email || ''}
+              disabled
+              style={{ width: '100%', padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-secondary)', opacity: 0.6 }}
+            />
+          </div>
+          <Button type="submit" disabled={loading}>{loading ? 'Saving...' : 'Save Changes'}</Button>
+        </form>
       </div>
-
-      <div className="card" style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.25rem', marginBottom: '1rem', fontWeight: '500', color: 'var(--accent)' }}>
-          Model Settings
-        </h2>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
-            Temperature: {temperature}
-          </label>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.1"
-            value={temperature}
-            onChange={(e) => setTemperature(parseFloat(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--accent)' }}
-          />
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
-            Lower values make responses more focused, higher values more creative
-          </p>
-        </div>
-      </div>
-
-      <Button onClick={saveSettings} disabled={saving}>
-        {saving ? 'Saving...' : 'Save Settings'}
-      </Button>
     </>
   )
 }
