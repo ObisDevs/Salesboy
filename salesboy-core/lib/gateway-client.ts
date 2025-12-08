@@ -6,7 +6,7 @@ const API_SECRET_KEY = process.env.API_SECRET_KEY!
 const gatewayClient = axios.create({
   baseURL: GATEWAY_URL,
   headers: {
-    'X-API-KEY': API_SECRET_KEY,
+    'x-api-key': API_SECRET_KEY,
     'Content-Type': 'application/json'
   }
 })
@@ -31,5 +31,5 @@ export async function stopSession(userId: string) {
 }
 
 export async function getSessionStatus(userId: string) {
-  return await gatewayClient.get(`/session/status/${userId}`)
+  return await gatewayClient.get(`/session/status`)
 }
