@@ -13,8 +13,10 @@ export async function GET() {
       .eq('user_id', USER_ID)
       .single()
 
+    console.log('Bot config GET:', { hasData: !!data, error: error?.code, prompt: data?.system_prompt?.substring(0, 50) })
+
     if (error && error.code === 'PGRST116') {
-      // No config found - return null, let frontend handle defaults
+      console.log('No config found, returning null')
       return NextResponse.json({ data: null })
     }
     
@@ -22,6 +24,7 @@ export async function GET() {
     
     return NextResponse.json({ data })
   } catch (error: any) {
+    console.error('Bot config GET error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
