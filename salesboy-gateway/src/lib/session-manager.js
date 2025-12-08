@@ -55,6 +55,33 @@ class SessionManager {
       this.sessions.delete(userId);
     });
 
+    client.on('message', async (message) => {
+      logger.info(`Message received from ${message.from}: ${message.body}`);
+      
+      // Forward to webhook
+      try {
+        const webhookUrl = process.env.NEXT_WEBHOOK_URL;
+        if (webhookUrl) {
+          const response = await fetch(webhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Webhook-Signature': 'hmac-signature-here' // TODO: Add HMAC
+            },
+            body: JSON.stringify({
+              userId,
+              from: message.from,
+              body: message.body,
+              timestamp: message.timestamp
+            })
+          });
+          logger.info(`Message forwarded to webhook: ${response.status}`);
+        }
+      } catch (error) {
+        logger.error(`Failed to forward message to webhook:`, error);
+      }
+    });
+
     this.sessions.set(userId, sessionData);
 
     try {
