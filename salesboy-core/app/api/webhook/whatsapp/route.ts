@@ -61,37 +61,62 @@ export async function POST(request: NextRequest) {
       direction: 'incoming'
     })
     
-    // STEP 1: Quick check for greetings (skip AI classification)
-    const lowerMessage = message.toLowerCase().trim()
-    const isGreeting = /^(hi|hello|hey|good morning|good afternoon|good evening|greetings|howdy|sup|what's up|whatsup)\b/i.test(lowerMessage)
+    // STEP 1: Check conversation history to determine if intent classification is needed
+    const { data: chatHistory, error: historyError } = await supabaseAdmin
+      .from('chat_logs')
+      .select('message_body, direction')
+      .eq('user_id', actualUserId)
+      .eq('from_number', from)
+      .order('timestamp', { ascending: false })
+      .limit(10)
+    
+    const messageCount = chatHistory?.length || 0
+    const hasConversationHistory = messageCount > 2 // At least 2 messages exchanged
+    
+    console.log(`📊 Message count: ${messageCount}, Has history: ${hasConversationHistory}`)
     
     let intent
     
-    if (isGreeting) {
-      // Force Response intent for greetings
-      console.log('👋 Greeting detected, skipping classification')
+    // Only classify intent if user has chatted before (not first message)
+    if (!hasConversationHistory) {
+      console.log('👋 First message - skipping intent classification')
       intent = {
         intent: 'Response',
         confidence: 1.0,
         task_type: null,
         payload: null,
-        raw_analysis: 'Greeting detected'
+        raw_analysis: 'First message - building rapport'
       }
     } else {
-      // STEP 1: Classify Intent
-      console.log('🧠 Classifying intent...')
-      try {
-        intent = await classifyIntent(message)
-        console.log('✅ Intent classified:', intent)
-      } catch (error) {
-        console.error('❌ Intent classification failed:', error)
-        // Fallback to Response intent
+      // Check if message contains action keywords
+      const lowerMessage = message.toLowerCase()
+      const hasActionKeyword = /\b(send|email|mail|forward|share|book|schedule|meeting|appointment|order|buy|purchase|place order)\b/i.test(lowerMessage)
+      
+      if (!hasActionKeyword) {
+        // No action keywords - likely just a question
+        console.log('💬 No action keywords - Response intent')
         intent = {
           intent: 'Response',
-          confidence: 0.5,
+          confidence: 0.9,
           task_type: null,
           payload: null,
-          raw_analysis: 'Classification failed, using fallback'
+          raw_analysis: 'Question or inquiry'
+        }
+      } else {
+        // Has action keywords - classify intent
+        console.log('🧠 Action detected, classifying intent...')
+        try {
+          intent = await classifyIntent(message)
+          console.log('✅ Intent classified:', intent)
+        } catch (error) {
+          console.error('❌ Intent classification failed:', error)
+          intent = {
+            intent: 'Response',
+            confidence: 0.5,
+            task_type: null,
+            payload: null,
+            raw_analysis: 'Classification failed, using fallback'
+          }
         }
       }
     }
@@ -139,14 +164,19 @@ export async function POST(request: NextRequest) {
       }
       
     } else {
-      // Response intent - use RAG pipeline
-      console.log('💬 Generating RAG response...')
+      // Response intent - use RAG pipeline with conversation context
+      console.log('💬 Generating AI response...')
       try {
-        responseMessage = await processMessage(actualUserId, message)
-        console.log('✅ RAG response generated')
+        // Build conversation context
+        const recentMessages = chatHistory?.slice(0, 5).reverse().map(msg => 
+          `${msg.direction === 'incoming' ? 'Customer' : 'You'}: ${msg.message_body}`
+        ).join('\n') || ''
+        
+        responseMessage = await processMessage(actualUserId, message, recentMessages)
+        console.log('✅ AI response generated')
       } catch (error) {
-        console.error('❌ RAG pipeline failed:', error)
-        responseMessage = `Hello! Thanks for your message: "${message}". I'm having a bit of trouble right now, but I'm here to help. Could you try asking again or let me know if you need immediate assistance?`
+        console.error('❌ AI pipeline failed:', error)
+        responseMessage = `Hello! Thanks for reaching out. I'm having a bit of trouble right now, but I'm here to help. Could you try asking again?`
       }
     }
     

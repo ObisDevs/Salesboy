@@ -74,7 +74,8 @@ export async function generateRAGResponse(
   userId: string,
   message: string,
   context: RAGContext,
-  temperature?: number
+  temperature?: number,
+  conversationContext?: string
 ): Promise<string> {
   const contextText = context.chunks
     .map(chunk => `[${chunk.filename}]: ${chunk.text}`)
@@ -84,33 +85,36 @@ export async function generateRAGResponse(
   
   let prompt: string
   
-  if (hasContext) {
-    prompt = `You have access to this information from the business knowledge base:
+  // Build prompt with conversation context
+  let contextSection = ''
+  
+  if (conversationContext) {
+    contextSection = `Recent conversation:
+${conversationContext}
 
+---
+
+`
+  }
+  
+  if (hasContext) {
+    prompt = `${contextSection}Knowledge base information:
 ${contextText}
 
 ---
 
-Customer: ${message}
+Customer's latest message: ${message}
 
-Respond naturally using the information above. Be conversational and helpful. If the knowledge base has the answer, use it confidently. If not, use your general knowledge or offer to help them connect with someone.`
+Respond naturally and helpfully. Use the knowledge base if relevant. Keep the conversation flowing naturally. Be warm and professional.`
   } else {
-    // No knowledge base context - handle intelligently
-    const lowerMessage = message.toLowerCase()
-    
-    if (lowerMessage.match(/^(hi|hello|hey|good morning|good afternoon|good evening|greetings)/)) {
-      prompt = `Customer: ${message}
+    prompt = `${contextSection}Customer's latest message: ${message}
 
-This is a greeting. Respond warmly and ask how you can help. Be friendly and welcoming. Keep it brief (1-2 sentences).`
-    } else {
-      prompt = `Customer: ${message}
-
-No specific information in the knowledge base for this query. Respond helpfully:
-- If it's a general question, answer with your knowledge
-- If it's about products/services, acknowledge and offer to help
-- If you truly don't know, be honest and offer to connect them with someone
-- Keep it natural and conversational`
-    }
+Respond naturally and helpfully:
+- If it's a greeting, respond warmly and ask how you can help
+- If it's a question, answer with your knowledge
+- If it's about products/services, be helpful and engaging
+- Keep it conversational and friendly
+- Use Nigerian expressions naturally when appropriate`
   }
 
   const response = await generateResponse(prompt, context.systemPrompt, temperature || 0.7)
@@ -131,7 +135,8 @@ No specific information in the knowledge base for this query. Respond helpfully:
 
 export async function processMessage(
   userId: string,
-  message: string
+  message: string,
+  conversationContext?: string
 ): Promise<string> {
   try {
     const context = await retrieveContext(userId, message)
@@ -145,9 +150,9 @@ export async function processMessage(
     
     const temperature = botConfig?.temperature || 0.7
     
-    return await generateRAGResponse(userId, message, context, temperature)
+    return await generateRAGResponse(userId, message, context, temperature, conversationContext)
   } catch (error) {
     console.error('RAG pipeline error:', error)
-    return 'I apologize, but I encountered an error processing your request. Please try again or contact support.'
+    throw error
   }
 }
