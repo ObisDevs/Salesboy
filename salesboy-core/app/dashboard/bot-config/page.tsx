@@ -20,7 +20,14 @@ export default function BotConfigPage() {
     fetch('/api/bot-config')
       .then(r => r.json())
       .then(d => {
-        setConfig(d.data)
+        if (d.data) {
+          setConfig({
+            system_prompt: d.data.system_prompt || '',
+            temperature: d.data.temperature ?? 0.7,
+            model: d.data.model || 'mistral-small',
+            max_tokens: d.data.max_tokens || 500
+          })
+        }
         setLoading(false)
       })
       .catch(() => {

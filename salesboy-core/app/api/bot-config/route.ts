@@ -13,14 +13,14 @@ export async function GET() {
       .eq('user_id', USER_ID)
       .single()
 
-    if (error && error.code !== 'PGRST116') throw error
+    if (error && error.code === 'PGRST116') {
+      // No config found - return null, let frontend handle defaults
+      return NextResponse.json({ data: null })
+    }
     
-    return NextResponse.json({ data: data || {
-      system_prompt: 'You are a helpful AI assistant for a Nigerian business.',
-      temperature: 0.7,
-      model: 'gemini-pro',
-      max_tokens: 500
-    }})
+    if (error) throw error
+    
+    return NextResponse.json({ data })
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
