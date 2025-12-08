@@ -69,10 +69,10 @@ export default function SessionsPage() {
 
   const listenForQR = async () => {
     try {
-      const res = await fetch('/api/sessions/qr?userId=current-user')
+      const res = await fetch('/api/sessions/status?user_id=current-user')
       const data = await res.json()
-      if (data.qr) {
-        setQrCode(data.qr)
+      if (data.gateway_status?.qr) {
+        setQrCode(data.gateway_status.qr)
       }
     } catch (error) {
       console.error('QR fetch error:', error)
