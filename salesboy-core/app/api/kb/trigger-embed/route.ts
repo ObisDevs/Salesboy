@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
         file_path: file.file_path,
         mime_type: file.mime_type,
         supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+        supabase_service_key: process.env.SUPABASE_SERVICE_ROLE_KEY,
         bucket: 'knowledge-base'
       })
     })
