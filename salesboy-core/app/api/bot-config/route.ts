@@ -33,6 +33,12 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     
+    console.log('Bot config PUT received:', {
+      prompt: body.system_prompt?.substring(0, 50),
+      model: body.model,
+      temperature: body.temperature
+    })
+    
     // Upsert with onConflict on user_id (unique constraint)
     const { data, error } = await supabaseAdmin
       .from('bot_config')
@@ -54,6 +60,7 @@ export async function PUT(request: NextRequest) {
       throw error
     }
     
+    console.log('Bot config saved:', { prompt: data?.system_prompt?.substring(0, 50) })
     return NextResponse.json({ data })
   } catch (error: any) {
     console.error('Bot config update error:', error)
