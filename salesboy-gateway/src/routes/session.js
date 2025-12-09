@@ -6,7 +6,20 @@ const router = express.Router();
 
 // Start session
 router.post('/start', async (req, res) => {
-  const { userId = 'current-user' } = req.body;
+  const { userId } = req.body || {};
+
+  // Validate userId presence and format
+  if (!userId || typeof userId !== 'string') {
+    logger.warn('Start session called without userId')
+    return res.status(400).json({ error: 'userId is required' })
+  }
+
+  // Reject obvious dev/test placeholders
+  const invalidPlaceholders = ['current-user', 'test-user', 'test-user-1', 'test-user-123']
+  if (invalidPlaceholders.includes(userId) || userId.startsWith('test-user')) {
+    logger.warn(`Start session rejected for placeholder userId: ${userId}`)
+    return res.status(400).json({ error: 'invalid userId' })
+  }
 
   try {
     const result = await sessionManager.createSession(userId);
@@ -19,7 +32,17 @@ router.post('/start', async (req, res) => {
 
 // Stop session
 router.post('/stop', async (req, res) => {
-  const { userId = 'current-user' } = req.body;
+  const { userId } = req.body || {};
+
+  if (!userId || typeof userId !== 'string') {
+    logger.warn('Stop session called without userId')
+    return res.status(400).json({ error: 'userId is required' })
+  }
+
+  if (userId === 'current-user' || userId.startsWith('test-user')) {
+    logger.warn(`Stop session rejected for placeholder userId: ${userId}`)
+    return res.status(400).json({ error: 'invalid userId' })
+  }
 
   try {
     const result = await sessionManager.stopSession(userId);
@@ -32,18 +55,36 @@ router.post('/stop', async (req, res) => {
 
 // Get session status
 router.get('/status/:userId?', async (req, res) => {
-  const { userId = 'current-user' } = req.params;
-  const status = sessionManager.getSessionStatus(userId);
-  const qr = await sessionManager.getQRCode(userId);
-  res.json({ ...status, qr });
+  const { userId } = req.params || {}
+
+  if (!userId) {
+    return res.status(400).json({ error: 'userId parameter is required' })
+  }
+
+  if (userId === 'current-user' || userId.startsWith('test-user')) {
+    return res.status(400).json({ error: 'invalid userId' })
+  }
+
+  const status = sessionManager.getSessionStatus(userId)
+  const qr = await sessionManager.getQRCode(userId)
+  res.json({ ...status, qr })
 });
 
 // Get session status (no userId required)
 router.get('/status', async (req, res) => {
-  const userId = 'current-user';
-  const status = sessionManager.getSessionStatus(userId);
-  const qr = await sessionManager.getQRCode(userId);
-  res.json({ ...status, qr });
+  // For this endpoint require explicit user_id query param
+  const userId = req.query.user_id || req.query.userId
+  if (!userId) {
+    return res.status(400).json({ error: 'user_id query parameter is required' })
+  }
+
+  if (userId === 'current-user' || String(userId).startsWith('test-user')) {
+    return res.status(400).json({ error: 'invalid userId' })
+  }
+
+  const status = sessionManager.getSessionStatus(String(userId))
+  const qr = await sessionManager.getQRCode(String(userId))
+  res.json({ ...status, qr })
 });
 
 // Get QR code (SSE)
