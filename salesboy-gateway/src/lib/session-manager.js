@@ -84,6 +84,17 @@ class SessionManager {
     client.on('disconnected', (reason) => {
       logger.warn(`User ${userId} disconnected: ${reason}`);
       this.sessions.delete(userId);
+      
+      // Auto-cleanup auth data when WhatsApp disconnects
+      try {
+        const authPath = `.wwebjs_auth/session-${userId}`;
+        if (fs.existsSync(authPath)) {
+          fs.rmSync(authPath, { recursive: true, force: true });
+          logger.info(`Cleaned up auth data for ${userId}`);
+        }
+      } catch (err) {
+        logger.error(`Failed to clean up auth for ${userId}:`, err);
+      }
     });
 
     client.on('message', async (message) => {
@@ -141,7 +152,14 @@ class SessionManager {
     try {
       await sessionData.client.destroy();
       this.sessions.delete(userId);
-      logger.info(`Session stopped for user ${userId}`);
+      
+      // Cleanup auth data
+      const authPath = `.wwebjs_auth/session-${userId}`;
+      if (fs.existsSync(authPath)) {
+        fs.rmSync(authPath, { recursive: true, force: true });
+      }
+      
+      logger.info(`Session stopped and cleaned up for ${userId}`);
       return { success: true, message: 'Session stopped' };
     } catch (error) {
       logger.error(`Failed to stop session for ${userId}:`, error);
