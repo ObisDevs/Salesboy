@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     const { userId } = auth!
 
-    const res = await fetch(`${GATEWAY_URL}/groups?user_id=${userId}`, {
+    const res = await fetch(`${GATEWAY_URL}/message/groups?user_id=${userId}`, {
       headers: { 'X-API-KEY': API_SECRET }
     })
 
