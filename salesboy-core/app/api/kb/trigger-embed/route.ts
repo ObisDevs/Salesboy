@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
         id: `${file_id}_chunk_${i}`,
         values: embedding,
         metadata: {
+          user_id: userId,
           text: chunks[i],
           filename: file.filename,
           file_id: file_id,
