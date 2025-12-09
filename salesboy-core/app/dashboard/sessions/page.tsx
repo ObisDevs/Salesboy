@@ -18,15 +18,15 @@ export default function SessionsPage() {
       const res = await fetch('/api/sessions/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: 'current-user' })
+        credentials: 'include'
       })
       const data = await res.json()
       if (!res.ok) {
         setError(data.error || 'Failed to start session')
       } else {
-        checkStatus()
-        // Start listening for QR code
-        listenForQR()
+        // Wait a moment for gateway to initialize session
+        await new Promise(resolve => setTimeout(resolve, 1000))
+        await checkStatus()
       }
     } catch (error: any) {
       setError(error.message || 'Network error')
@@ -42,7 +42,7 @@ export default function SessionsPage() {
       const res = await fetch('/api/sessions/stop', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user_id: 'current-user' })
+        credentials: 'include'
       })
       const data = await res.json()
       if (!res.ok) {
@@ -82,23 +82,17 @@ export default function SessionsPage() {
 
   const checkStatus = async () => {
     try {
-      const res = await fetch('/api/sessions/status?user_id=current-user')
+      const res = await fetch('/api/sessions/status', {
+        credentials: 'include'
+      })
       const data = await res.json()
       setSessionStatus(data)
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const listenForQR = async () => {
-    try {
-      const res = await fetch('/api/sessions/status?user_id=current-user')
-      const data = await res.json()
-      if (data.gateway_status?.qr) {
+      // Update QR if available and session not ready
+      if (data.gateway_status?.qr && data.gateway_status?.exists && !data.gateway_status?.ready) {
         setQrCode(data.gateway_status.qr)
       }
     } catch (error) {
-      console.error('QR fetch error:', error)
+      console.error(error)
     }
   }
 
@@ -110,12 +104,6 @@ export default function SessionsPage() {
       stopAutoRefresh()
     }
   }, [])
-
-  useEffect(() => {
-    if (sessionStatus?.gateway_status?.exists && !sessionStatus?.gateway_status?.ready) {
-      listenForQR()
-    }
-  }, [sessionStatus])
 
   return (
     <>
