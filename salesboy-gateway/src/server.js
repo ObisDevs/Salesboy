@@ -5,6 +5,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import sessionRoutes from './routes/session.js';
 import messageRoutes from './routes/message.js';
+import groupsRoutes from './routes/groups.js';
 import logger from './utils/logger.js';
 
 const app = express();
@@ -34,6 +35,7 @@ app.use(limiter);
 // Routes
 app.use('/session', sessionRoutes);
 app.use('/message', messageRoutes);
+app.use('/groups', groupsRoutes);
 
 // Health check
 app.get('/health', (req, res) => {
