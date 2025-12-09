@@ -16,14 +16,21 @@ class SessionManager {
       const authDir = '.wwebjs_auth';
       if (!fs.existsSync(authDir)) return;
       
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const sessions = fs.readdirSync(authDir);
+      
       sessions.forEach(sessionDir => {
         if (sessionDir.startsWith('session-')) {
           const userId = sessionDir.replace('session-', '');
-          logger.info(`Restoring session for user ${userId}`);
-          this.createSession(userId).catch(err => 
-            logger.error(`Failed to restore session for ${userId}:`, err)
-          );
+          
+          if (uuidRegex.test(userId)) {
+            logger.info(`Restoring session for user ${userId}`);
+            this.createSession(userId).catch(err => 
+              logger.error(`Failed to restore session for ${userId}:`, err)
+            );
+          } else {
+            logger.warn(`Skipping invalid session: ${sessionDir}`);
+          }
         }
       });
     } catch (error) {

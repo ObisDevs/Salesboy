@@ -82,23 +82,6 @@ export async function POST(request: NextRequest) {
     }
     console.log('✓ Session record created')
 
-    // 4. Create empty whitelists entry
-    const { error: whitelistError } = await supabaseAdmin
-      .from('whitelists')
-      .insert({
-        user_id: userId,
-        phone_number: 'placeholder',
-        name: 'System Placeholder',
-        notes: 'Auto-created on signup'
-      })
-
-    if (whitelistError && whitelistError.code !== '23505') {
-      // Ignore duplicate key errors
-      console.warn('Whitelist creation skipped:', whitelistError.code)
-    } else {
-      console.log('✓ Whitelist initialized')
-    }
-
     return NextResponse.json({
       success: true,
       message: 'User initialized successfully',
@@ -106,8 +89,7 @@ export async function POST(request: NextRequest) {
       initialized: {
         profile: true,
         bot_config: true,
-        session: true,
-        whitelists: true
+        session: true
       }
     })
   } catch (error: any) {
