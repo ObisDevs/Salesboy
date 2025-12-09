@@ -20,7 +20,10 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('chat_logs').select('id', { count: 'exact', head: true }).eq('user_id', userId),
       fetch(`${process.env.GATEWAY_URL}/session/status?user_id=${userId}`, {
         headers: { 'X-API-KEY': process.env.API_SECRET_KEY || '' }
-      }).then(r => r.json()).catch(() => ({ ready: false }))
+      }).then(r => r.json()).catch(err => {
+        console.error('Gateway status error:', err)
+        return { exists: false, ready: false }
+      })
     ])
 
     const today = new Date()
@@ -34,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       data: {
-        sessions: sessionStatus.ready ? 1 : 0,
+        sessions: (sessionStatus.exists && sessionStatus.ready) ? 1 : 0,
         documents: kbCount.count || 0,
         messages: todayMessages || 0,
         totalMessages: logsCount.count || 0

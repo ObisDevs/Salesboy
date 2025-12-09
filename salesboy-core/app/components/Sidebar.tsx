@@ -1,8 +1,16 @@
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 
 export default function Sidebar() {
   const pathname = usePathname()
+  const router = useRouter()
+
+  const handleLogout = async () => {
+    const supabase = getSupabaseBrowserClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+  }
 
   const links = [
     { href: '/dashboard', label: 'Overview', icon: '◆' },
@@ -54,6 +62,29 @@ export default function Sidebar() {
             </Link>
           )
         })}
+        <button
+          onClick={handleLogout}
+          style={{
+            color: 'var(--text-muted)',
+            padding: '0.75rem 1rem',
+            borderRadius: '8px',
+            background: 'transparent',
+            fontWeight: '400',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            border: 'none',
+            cursor: 'pointer',
+            width: '100%',
+            textAlign: 'left',
+            marginTop: '1rem',
+            borderTop: '1px solid var(--border)',
+            paddingTop: '1.5rem'
+          }}
+        >
+          <span style={{ color: '#dc2626' }}>◓</span>
+          Logout
+        </button>
       </nav>
     </aside>
   )
