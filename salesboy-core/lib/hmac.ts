@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 
-const HMAC_SECRET = process.env.HMAC_SECRET!
+const HMAC_SECRET = process.env.HMAC_SECRET || ''
+const DISABLE_HMAC = (process.env.DISABLE_HMAC || '').toLowerCase() === 'true'
 
 export function generateHmac(payload: string): string {
   return createHmac('sha256', HMAC_SECRET)
@@ -9,6 +10,11 @@ export function generateHmac(payload: string): string {
 }
 
 export function validateHmac(payload: string, signature: string): boolean {
+  if (DISABLE_HMAC) {
+    console.warn('HMAC validation disabled via DISABLE_HMAC');
+    return true
+  }
+
   if (!HMAC_SECRET) {
     console.warn('HMAC_SECRET not configured, skipping validation')
     return true

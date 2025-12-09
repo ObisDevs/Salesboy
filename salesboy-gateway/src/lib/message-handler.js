@@ -49,14 +49,24 @@ class MessageHandler {
     }
 
     const signature = generateHMAC(payload, this.hmacSecret);
+    // If HMAC is explicitly disabled via env, skip sending the header
+    const disableHmac = (process.env.DISABLE_HMAC || '').toLowerCase() === 'true'
+    const signatureHeader = (!disableHmac && this.hmacSecret)
+      ? `sha256=${signature}`
+      : null
 
     try {
+      const headers = {
+        'Content-Type': 'application/json'
+      }
+
+      if (signatureHeader) {
+        headers['X-Signature'] = signatureHeader
+      }
+
       const response = await fetch(this.webhookUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Signature': signature
-        },
+        headers,
         body: JSON.stringify(payload)
       });
 
