@@ -3,6 +3,8 @@ import { stopSession } from '@/lib/gateway-client'
 import { supabaseAdmin } from '@/lib/supabase'
 import { requireAuth } from '@/lib/server-auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const { error: authError, auth } = await requireAuth(request)

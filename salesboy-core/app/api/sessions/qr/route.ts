@@ -2,6 +2,8 @@ import { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/server-auth'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   const { error: authError, auth } = await requireAuth(request)
   if (authError) return authError
