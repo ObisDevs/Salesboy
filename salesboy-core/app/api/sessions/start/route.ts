@@ -12,12 +12,15 @@ export async function POST(request: NextRequest) {
 
     const { userId } = auth!
 
+    console.log(`[sessions/start] Request by userId=${userId}`)
+
     // Start session via gateway
     let gatewayResponse
     try {
       gatewayResponse = await startSession(userId)
+      console.log('[sessions/start] Gateway response:', gatewayResponse?.data)
     } catch (err: any) {
-      console.error('Gateway error:', err?.message || err)
+      console.error('[sessions/start] Gateway error:', err?.message || err)
       return NextResponse.json({ 
         error: 'Gateway not available. Make sure the gateway is running on your VPS.' 
       }, { status: 503 })

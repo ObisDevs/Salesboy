@@ -38,7 +38,7 @@ async function testEndpoints() {
   const webhookPayload = JSON.stringify({
     from: '+1234567890',
     message: 'Hello test',
-    user_id: 'test-user'
+    user_id: process.env.USER_ID || 'test-user'
   })
   
   const signature = generateHmac(webhookPayload)
@@ -64,10 +64,11 @@ async function testEndpoints() {
   
   // Test session status endpoint
   try {
+    const userId = process.env.USER_ID || 'test-user'
     const response = await makeRequest({
       hostname: 'localhost',
       port: 3000,
-      path: '/api/sessions/status?user_id=test-user',
+      path: `/api/sessions/status?user_id=${userId}`,
       method: 'GET'
     })
     

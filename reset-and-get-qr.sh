@@ -1,8 +1,13 @@
 #!/bin/bash
 
-API_KEY="0ac2f6495dbba3807785e791780244afdeb63829d78331a6611d0fbd56d7812f"
-GATEWAY_URL="http://srv892192.hstgr.cloud:3001"
-USER_ID="current-user"
+API_KEY="${API_KEY:-0ac2f6495dbba3807785e791780244afdeb63829d78331a6611d0fbd56d7812f}"
+GATEWAY_URL="${GATEWAY_URL:-http://srv892192.hstgr.cloud:3001}"
+# Require USER_ID to be set to avoid accidental production calls
+if [ -z "$USER_ID" ]; then
+  echo "ERROR: Please set USER_ID environment variable before running this script."
+  echo "Example: USER_ID=ba418a83-7f27-4300-849b-c69b7517e28f ./reset-and-get-qr.sh"
+  exit 1
+fi
 
 echo "========================================="
 echo "Salesboy Gateway - QR Code Reset Script"

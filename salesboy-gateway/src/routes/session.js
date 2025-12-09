@@ -3,6 +3,7 @@ import sessionManager from '../lib/session-manager.js';
 import logger from '../utils/logger.js';
 
 const router = express.Router();
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // Start session
 router.post('/start', async (req, res) => {
@@ -19,6 +20,12 @@ router.post('/start', async (req, res) => {
   if (invalidPlaceholders.includes(userId) || userId.startsWith('test-user')) {
     logger.warn(`Start session rejected for placeholder userId: ${userId}`)
     return res.status(400).json({ error: 'invalid userId' })
+  }
+
+  // Validate UUID format
+  if (!uuidRegex.test(userId)) {
+    logger.warn(`Start session rejected for non-UUID userId: ${userId}`)
+    return res.status(400).json({ error: 'invalid userId format' })
   }
 
   try {
@@ -42,6 +49,11 @@ router.post('/stop', async (req, res) => {
   if (userId === 'current-user' || userId.startsWith('test-user')) {
     logger.warn(`Stop session rejected for placeholder userId: ${userId}`)
     return res.status(400).json({ error: 'invalid userId' })
+  }
+
+  if (!uuidRegex.test(userId)) {
+    logger.warn(`Stop session rejected for non-UUID userId: ${userId}`)
+    return res.status(400).json({ error: 'invalid userId format' })
   }
 
   try {
@@ -77,9 +89,12 @@ router.get('/status', async (req, res) => {
   if (!userId) {
     return res.status(400).json({ error: 'user_id query parameter is required' })
   }
-
   if (userId === 'current-user' || String(userId).startsWith('test-user')) {
     return res.status(400).json({ error: 'invalid userId' })
+  }
+
+  if (!uuidRegex.test(String(userId))) {
+    return res.status(400).json({ error: 'invalid userId format' })
   }
 
   const status = sessionManager.getSessionStatus(String(userId))
@@ -90,6 +105,12 @@ router.get('/status', async (req, res) => {
 // Get QR code (SSE)
 router.get('/qr/:userId', async (req, res) => {
   const { userId } = req.params;
+
+  if (!userId || !uuidRegex.test(userId)) {
+    logger.warn(`QR SSE connection rejected for invalid userId: ${userId}`)
+    res.status(400).end()
+    return
+  }
 
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');

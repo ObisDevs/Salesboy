@@ -29,7 +29,7 @@ async function testCoreWebhook() {
   const payload = {
     from: '+1234567890',
     message: 'Hello AI assistant',
-    user_id: 'test-user-123'
+    user_id: process.env.USER_ID || 'test-user-123'
   }
   
   const payloadStr = JSON.stringify(payload)
@@ -56,12 +56,13 @@ async function testSessionManagement() {
   try {
     // Test session start
     const startResponse = await axios.post(`${CORE_URL}/sessions/start`, {
-      user_id: 'test-user-123'
+      user_id: process.env.USER_ID || 'test-user-123'
     })
     console.log('✅ Session start:', startResponse.data)
     
     // Test session status
-    const statusResponse = await axios.get(`${CORE_URL}/sessions/status?user_id=test-user-123`)
+    const userId = process.env.USER_ID || 'test-user-123'
+    const statusResponse = await axios.get(`${CORE_URL}/sessions/status?user_id=${userId}`)
     console.log('✅ Session status:', statusResponse.data)
     
     return true
