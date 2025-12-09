@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { validateHmac } from '@/lib/hmac'
+import { validateHmac, generateHmac } from '@/lib/hmac'
 import { supabaseAdmin } from '@/lib/supabase'
 import { classifyIntent } from '@/lib/intent-classifier'
 import { processMessage } from '@/lib/rag-pipeline'
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     // Validate HMAC signature
     if (!validateHmac(body, signature)) {
       console.warn('Invalid HMAC signature')
-      // return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
     
     const data = JSON.parse(body)
@@ -22,15 +22,18 @@ export async function POST(request: NextRequest) {
     
     console.log('📨 Webhook received:', { from, message, user_id })
     
-    // Map gateway user_id to actual UUID
-    const actualUserId = user_id === 'current-user' 
-      ? '00000000-0000-0000-0000-000000000001' 
-      : user_id
+    // Use the user_id from the webhook (passed by gateway)
+    const actualUserId = user_id
     
-    // Check if user exists
+    if (!actualUserId) {
+      console.warn('⚠️ No user_id in webhook payload')
+      return NextResponse.json({ error: 'user_id required' }, { status: 400 })
+    }
+    
+    // Check if user exists and read metadata (webhook settings)
     const { data: profile } = await supabaseAdmin
       .from('profiles')
-      .select('id')
+      .select('id, metadata')
       .eq('id', actualUserId)
       .single()
     
@@ -125,25 +128,56 @@ export async function POST(request: NextRequest) {
     
     // STEP 2: Handle based on intent
     if (intent.intent === 'Task' && intent.task_type) {
-      // Task intent - forward to n8n and acknowledge
-      console.log('🔄 Forwarding task to n8n:', intent.task_type)
-      
-      try {
-        await forwardTaskToN8n({
-          task_type: intent.task_type,
-          payload: intent.payload || {},
-          user_id: actualUserId,
-          from_number: from,
-          original_message: message
-        })
-        
-        responseMessage = getTaskAcknowledgment(intent.task_type)
-        console.log('✅ Task forwarded successfully')
-      } catch (error) {
-        console.error('❌ Failed to forward task:', error)
-        responseMessage = "I understand you want me to help with that, but I'm having trouble processing your request right now. Let me connect you with someone who can assist."
+      // Task intent - forward to n8n and/or user's intent webhook, then acknowledge
+      console.log('🔄 Forwarding task to n8n and user webhook (if configured):', intent.task_type)
+
+      const taskPayload = {
+        task_type: intent.task_type,
+        payload: intent.payload || {},
+        user_id: actualUserId,
+        from_number: from,
+        original_message: message
       }
-      
+
+      // First: forward to n8n (if configured in environment)
+      try {
+        await forwardTaskToN8n(taskPayload)
+        console.log('✅ Task forwarded to n8n')
+      } catch (error) {
+        console.error('❌ Failed to forward task to n8n:', error)
+      }
+
+      // Second: forward to user's configured intent webhook URL (if set)
+      try {
+        const intentWebhookUrl = profile?.metadata?.intent_webhook_url
+        if (intentWebhookUrl) {
+          const payloadStr = JSON.stringify(taskPayload)
+          const signature = generateHmac(payloadStr)
+
+          await fetch(intentWebhookUrl, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Signature': `sha256=${signature}`
+            },
+            body: payloadStr,
+            // user-provided webhooks may be slow; give a short timeout if runtime supports
+          })
+
+          console.log('✅ Task forwarded to user intent webhook:', intentWebhookUrl)
+        } else {
+          console.log('ℹ️ No intent_webhook_url configured for user')
+        }
+      } catch (error) {
+        console.error('❌ Failed to forward task to user webhook:', error)
+      }
+
+      try {
+        responseMessage = getTaskAcknowledgment(intent.task_type)
+      } catch (err) {
+        responseMessage = "I'm working on that for you. I'll get back to you shortly!"
+      }
+
     } else {
       // Response intent - use RAG pipeline with conversation context
       console.log('💬 Generating AI response...')
@@ -153,8 +187,8 @@ export async function POST(request: NextRequest) {
           `${msg.direction === 'incoming' ? 'Customer' : 'You'}: ${msg.message_body}`
         ).join('\n') || ''
         
-        console.log('Calling processMessage with:', { actualUserId, message, hasContext: !!recentMessages })
-        responseMessage = await processMessage(actualUserId, message, recentMessages)
+          console.log('Calling processMessage with:', { actualUserId, message, hasContext: !!recentMessages })
+          responseMessage = await processMessage(actualUserId, message, recentMessages)
         console.log('✅ AI response generated:', responseMessage.substring(0, 50))
       } catch (error: any) {
         console.error('❌ AI pipeline failed:', error)
@@ -171,7 +205,7 @@ export async function POST(request: NextRequest) {
     
     // STEP 3: Send response
     try {
-      await sendMessage({ userId: user_id, to: from, message: responseMessage })
+      await sendMessage({ userId: actualUserId, to: from, message: responseMessage })
       
       // Log outgoing message
       await supabaseAdmin.from('chat_logs').insert({

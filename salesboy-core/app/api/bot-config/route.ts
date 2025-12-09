@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth } from '@/lib/server-auth'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = '00000000-0000-0000-0000-000000000001'
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const timestamp = Date.now()
-    console.log(`[${timestamp}] Fetching bot config...`)
+    const { error: authError, auth } = await requireAuth(request)
     
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
+
     const { data, error } = await supabaseAdmin
       .from('bot_config')
       .select('*')
-      .eq('user_id', USER_ID)
+      .eq('user_id', userId)
       .order('updated_at', { ascending: false })
       .limit(1)
       .single()
 
-    console.log(`[${timestamp}] Bot config GET:`, { 
-      hasData: !!data, 
-      error: error?.code, 
-      prompt: data?.system_prompt?.substring(0, 50),
-      fullPrompt: data?.system_prompt,
-      model: data?.model,
-      updated_at: data?.updated_at
-    })
-
     if (error && error.code === 'PGRST116') {
-      console.log('No config found, returning null')
       return NextResponse.json({ data: null })
     }
     
@@ -37,8 +31,6 @@ export async function GET() {
     return NextResponse.json({ data }, {
       headers: {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-        'Pragma': 'no-cache',
-        'Expires': '0'
       }
     })
   } catch (error: any) {
@@ -49,19 +41,19 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
     const body = await request.json()
     
-    console.log('Bot config PUT received:', {
-      prompt: body.system_prompt?.substring(0, 50),
-      model: body.model,
-      temperature: body.temperature
-    })
-    
-    // Upsert with onConflict on user_id (unique constraint)
     const { data, error } = await supabaseAdmin
       .from('bot_config')
       .upsert({
-        user_id: USER_ID,
+        user_id: userId,
         system_prompt: body.system_prompt,
         temperature: body.temperature,
         model: body.model,
@@ -78,7 +70,6 @@ export async function PUT(request: NextRequest) {
       throw error
     }
     
-    console.log('Bot config saved:', { prompt: data?.system_prompt?.substring(0, 50) })
     return NextResponse.json({ data })
   } catch (error: any) {
     console.error('Bot config update error:', error)

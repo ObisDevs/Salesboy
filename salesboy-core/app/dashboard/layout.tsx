@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase-client'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 import Sidebar from '../components/Sidebar'
 import { ToastProvider } from '../components/ui/toast'
 
@@ -14,7 +14,8 @@ export default function DashboardLayout({
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const supabase = getSupabaseBrowserClient()
+    supabase.auth.getSession().then(({ data: { session } }: any) => {
       if (!session) {
         router.push('/login')
       } else {

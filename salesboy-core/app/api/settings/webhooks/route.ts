@@ -1,21 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth } from '@/lib/server-auth'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = '00000000-0000-0000-0000-000000000001'
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    if (authError) return authError
+
+    const { userId } = auth!
+
     const { data } = await supabaseAdmin
       .from('profiles')
       .select('metadata')
-      .eq('id', USER_ID)
+      .eq('id', userId)
+      .limit(1)
       .single()
 
     return NextResponse.json({ 
       data: {
-        n8n_kb_webhook: data?.metadata?.n8n_kb_webhook || ''
+        n8n_kb_webhook: data?.metadata?.n8n_kb_webhook || '',
+        intent_webhook_url: data?.metadata?.intent_webhook_url || ''
       }
     }, {
       headers: {
@@ -31,11 +37,16 @@ export async function PUT(request: NextRequest) {
   try {
     const body = await request.json()
     console.log('Webhook PUT request:', body)
-    
+    const { error: authError, auth } = await requireAuth(request)
+    if (authError) return authError
+
+    const { userId } = auth!
+
     const { data: profile, error: selectError } = await supabaseAdmin
       .from('profiles')
       .select('metadata')
-      .eq('id', USER_ID)
+      .eq('id', userId)
+      .limit(1)
       .single()
 
     if (selectError) {
@@ -45,7 +56,8 @@ export async function PUT(request: NextRequest) {
 
     const updatedMetadata = {
       ...(profile?.metadata || {}),
-      n8n_kb_webhook: body.n8n_kb_webhook
+      n8n_kb_webhook: body.n8n_kb_webhook,
+      intent_webhook_url: body.intent_webhook_url || profile?.metadata?.intent_webhook_url || ''
     }
 
     console.log('Updating metadata:', updatedMetadata)
@@ -53,7 +65,7 @@ export async function PUT(request: NextRequest) {
     const { error } = await supabaseAdmin
       .from('profiles')
       .update({ metadata: updatedMetadata })
-      .eq('id', USER_ID)
+      .limit(1)
 
     if (error) {
       console.error('Profile update error:', error)

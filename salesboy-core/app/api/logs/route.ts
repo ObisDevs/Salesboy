@@ -1,24 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth } from '@/lib/server-auth'
 
 export const dynamic = 'force-dynamic'
 
-const USER_ID = '00000000-0000-0000-0000-000000000001'
-
 export async function GET(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
+
     const limit = parseInt(request.nextUrl.searchParams.get('limit') || '50')
 
-    // Direct query - bypass RPC
     const { data, error } = await supabaseAdmin
       .from('chat_logs')
       .select('*')
-      .eq('user_id', USER_ID)
+      .eq('user_id', userId)
       .order('timestamp', { ascending: false })
       .limit(limit)
 
-    console.log('Logs API - data count:', data?.length, 'error:', error)
-    
     if (error) throw error
     return NextResponse.json({ data: data || [] })
   } catch (error: any) {

@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth } from '@/lib/server-auth'
 
-const USER_ID = '00000000-0000-0000-0000-000000000001'
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
+
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .select('*')
-      .eq('id', USER_ID)
+      .eq('id', userId)
       .single()
 
     if (error) throw error
@@ -20,12 +27,19 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
     const body = await request.json()
 
     const { data, error } = await supabaseAdmin
       .from('profiles')
       .update(body)
-      .eq('id', USER_ID)
+      .eq('id', userId)
       .select()
       .single()
 

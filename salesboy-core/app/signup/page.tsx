@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase-client'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import Link from 'next/link'
@@ -19,7 +19,8 @@ export default function SignupPage() {
     setLoading(true)
     setError('')
 
-    const { error } = await supabase.auth.signUp({
+    const supabase = getSupabaseBrowserClient()
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -30,13 +31,34 @@ export default function SignupPage() {
     if (error) {
       setError(error.message)
       setLoading(false)
-    } else {
+    } else if (data.user?.id) {
+      // Initialize user profile, bot_config, and session
+      try {
+        const initResponse = await fetch('/api/auth/on-signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId: data.user.id,
+            email: data.user.email
+          })
+        })
+
+        if (!initResponse.ok) {
+          console.error('Failed to initialize user:', await initResponse.json())
+        } else {
+          console.log('✓ User initialized successfully')
+        }
+      } catch (err) {
+        console.error('Error initializing user:', err)
+      }
+
       setSuccess(true)
       setLoading(false)
     }
   }
 
   const handleGoogleSignup = async () => {
+    const supabase = getSupabaseBrowserClient()
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {

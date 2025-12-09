@@ -1,26 +1,112 @@
-'use client'
-import { useState, useEffect } from 'react'
+ 'use client'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import DashboardHeader from '../components/DashboardHeader'
 import { Button } from '../components/ui/button'
 import { LoadingSpinner } from '../components/ui/loading'
 import { ErrorBoundary } from '../components/ErrorBoundary'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 
 export default function Dashboard() {
   const router = useRouter()
   const [profile, setProfile] = useState<any>(null)
   const [stats, setStats] = useState({ sessions: 0, documents: 0, messages: 0, totalMessages: 0 })
   const [loading, setLoading] = useState(true)
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
-    Promise.all([
-      fetch('/api/profile').then(r => r.json()),
-      fetch('/api/stats').then(r => r.json())
-    ]).then(([profileData, statsData]) => {
-      setProfile(profileData.data)
-      setStats(statsData.data)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    const supabase = getSupabaseBrowserClient()
+
+    async function load() {
+      try {
+        // Debug: Check if auth token exists in localStorage
+        const keys = Object.keys(localStorage)
+        const authKeys = keys.filter(k => k.includes('auth') || k.includes('supabase'))
+        console.log('Auth-related localStorage keys:', authKeys)
+
+        // Try to get session directly first
+        console.log('Attempting to restore session from storage...')
+        const { data: { session: storedSession }, error: sessionError } = await supabase.auth.getSession()
+        console.log('getSession() result:', { hasSession: !!storedSession, error: sessionError?.message })
+
+        // Use onAuthStateChange as a fallback listener for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event: any, session: any) => {
+            console.log('Auth state changed:', { event, hasSession: !!session, userEmail: session?.user?.email })
+
+            if (!session) {
+              console.log('No session in onAuthStateChange')
+              setAuthenticated(false)
+              setLoading(false)
+              return
+            }
+
+            console.log('Session found via onAuthStateChange:', session.user.email)
+            setAuthenticated(true)
+
+            // Fetch dashboard data
+            try {
+              const [pRes, sRes] = await Promise.all([
+                fetch('/api/profile', { credentials: 'include' }),
+                fetch('/api/stats', { credentials: 'include' })
+              ])
+
+              console.log('API responses:', { profileStatus: pRes.status, statsStatus: sRes.status })
+
+              if (pRes.status === 401 || sRes.status === 401) {
+                console.error('API returned 401 - session may be invalid')
+                setLoading(false)
+                return
+              }
+
+              const profileData = await pRes.json()
+              const statsData = await sRes.json()
+
+              setProfile(profileData.data)
+              setStats(statsData.data)
+            } catch (err) {
+              console.error('Error fetching dashboard data:', err)
+            } finally {
+              setLoading(false)
+            }
+          }
+        )
+
+        // If we already have a stored session, immediately use it
+        if (storedSession) {
+          console.log('Using stored session immediately:', storedSession.user.email)
+          setAuthenticated(true)
+          
+          try {
+            const [pRes, sRes] = await Promise.all([
+              fetch('/api/profile', { credentials: 'include' }),
+              fetch('/api/stats', { credentials: 'include' })
+            ])
+
+            if (pRes.status !== 401 && sRes.status !== 401) {
+              const profileData = await pRes.json()
+              const statsData = await sRes.json()
+              setProfile(profileData.data)
+              setStats(statsData.data)
+            }
+          } catch (err) {
+            console.error('Error fetching dashboard data from stored session:', err)
+          } finally {
+            setLoading(false)
+          }
+        }
+
+        return () => subscription.unsubscribe()
+      } catch (err) {
+        console.error('Dashboard auth setup error:', err)
+        setLoading(false)
+      }
+    }
+
+    const unsubscribe = load()
+    return () => {
+      unsubscribe?.then(fn => fn?.())
+    }
   }, [])
 
   if (loading) {
@@ -29,6 +115,18 @@ export default function Dashboard() {
         <DashboardHeader title="Dashboard" description="System Overview" />
         <div className="card" style={{ textAlign: 'center', padding: '3rem' }}>
           <LoadingSpinner />
+        </div>
+      </>
+    )
+  }
+
+  if (authenticated === false) {
+    return (
+      <>
+        <DashboardHeader title="Dashboard" description="Please sign in" />
+        <div className="card" style={{ textAlign: 'center', padding: '2.5rem' }}>
+          <p style={{ marginBottom: '1rem' }}>You are not signed in. Please log in to access your dashboard.</p>
+          <Button onClick={() => router.push('/login')}>Go to Login</Button>
         </div>
       </>
     )

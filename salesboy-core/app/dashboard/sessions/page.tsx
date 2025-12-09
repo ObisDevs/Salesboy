@@ -70,7 +70,7 @@ export default function SessionsPage() {
     stopAutoRefresh()
     intervalRef.current = setInterval(() => {
       checkStatus()
-    }, 3000) // Check every 3 seconds
+    }, 8000) // Check every 8 seconds (reduced polling frequency to avoid gateway rate limits)
   }
 
   const stopAutoRefresh = () => {

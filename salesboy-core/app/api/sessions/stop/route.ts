@@ -1,27 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { stopSession } from '@/lib/gateway-client'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth } from '@/lib/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const { user_id } = await request.json()
-    
-    if (!user_id) {
-      return NextResponse.json({ error: 'user_id required' }, { status: 400 })
-    }
-    
+    const { error: authError, auth } = await requireAuth(request)
+    if (authError) return authError
+
+    const { userId } = auth!
+
     // Stop session via gateway
-    const response = await stopSession(user_id)
-    
+    const response = await stopSession(userId)
+
     // Update session status in database
     await supabaseAdmin
       .from('sessions')
       .upsert({
-        user_id,
-        status: 'stopped',
-        updated_at: new Date().toISOString()
+        session_id: `session_${userId}`,
+        user_id: userId,
+        status: 'stopped'
+      }, {
+        onConflict: 'session_id'
       })
-    
+
     return NextResponse.json(response.data)
   } catch (error) {
     console.error('Stop session error:', error)

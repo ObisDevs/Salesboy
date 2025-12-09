@@ -13,7 +13,7 @@ export default function GroupsPage() {
   const fetchGroups = async () => {
     try {
       setLoading(true)
-      const res = await fetch('/api/groups?user_id=00000000-0000-0000-0000-000000000001')
+      const res = await fetch('/api/groups')
       const { data } = await res.json()
       setGroups(data || [])
     } catch (error) {

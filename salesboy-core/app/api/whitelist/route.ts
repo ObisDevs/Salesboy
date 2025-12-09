@@ -1,14 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { requireAuth } from '@/lib/server-auth'
 
-const USER_ID = '00000000-0000-0000-0000-000000000001'
-
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
+
     const { data, error } = await supabaseAdmin
       .from('whitelists')
       .select('*')
-      .eq('user_id', USER_ID)
+      .eq('user_id', userId)
       .order('created_at', { ascending: false })
 
     if (error) throw error
@@ -20,11 +27,18 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
     const { phone_number, name, notes } = await request.json()
 
     const { data, error } = await supabaseAdmin
       .from('whitelists')
-      .insert({ user_id: USER_ID, phone_number, name, notes })
+      .insert({ user_id: userId, phone_number, name, notes })
       .select()
       .single()
 
@@ -37,8 +51,27 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
+    const { error: authError, auth } = await requireAuth(request)
+    
+    if (authError) {
+      return authError
+    }
+
+    const { userId } = auth!
+
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')
+
+    // Verify whitelist belongs to user
+    const { data: whitelist } = await supabaseAdmin
+      .from('whitelists')
+      .select('user_id')
+      .eq('id', id)
+      .single()
+
+    if (!whitelist || whitelist.user_id !== userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
 
     const { error } = await supabaseAdmin
       .from('whitelists')

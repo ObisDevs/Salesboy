@@ -1,23 +1,83 @@
-'use client'
-import { useState, useEffect } from 'react'
+ 'use client'
+import { useState, useEffect, useRef } from 'react'
+import { createPagesBrowserClient } from '@supabase/auth-helpers-nextjs'
 import { Button } from '@/app/components/ui/button'
 import DashboardHeader from '@/app/components/DashboardHeader'
 import { useToast } from '@/app/components/ui/toast'
 import { profileSchema } from '@/lib/validation'
 import { LoadingSpinner } from '@/app/components/ui/loading'
+import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 
 export default function SettingsPage() {
   const [profile, setProfile] = useState({ full_name: '', phone_number: '', email: '' })
-  const [webhooks, setWebhooks] = useState({ n8n_kb_webhook: '' })
+  const [webhooks, setWebhooks] = useState({ n8n_kb_webhook: '', intent_webhook_url: '' })
   const [savingWebhooks, setSavingWebhooks] = useState(false)
   const [loading, setLoading] = useState(false)
   const [errors, setErrors] = useState<any>({})
+  const [authenticated, setAuthenticated] = useState<boolean | null>(null)
   const { showToast } = useToast()
 
   useEffect(() => {
-    fetch('/api/profile').then(r => r.json()).then(d => setProfile(d.data || {}))
-    fetch('/api/settings/webhooks').then(r => r.json()).then(d => setWebhooks(d.data || {}))
+    const supabase = getSupabaseBrowserClient()
+
+    async function setupAuth() {
+      try {
+        // Use onAuthStateChange to properly detect session changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(
+          async (event: any, session: any) => {
+            console.log('Auth state changed:', { event, hasSession: !!session })
+
+            if (!session) {
+              console.log('No session - user not authenticated')
+              setAuthenticated(false)
+              setLoading(false)
+              return
+            }
+
+            console.log('Session found:', session.user.email)
+            setAuthenticated(true)
+
+            // Fetch settings data
+            try {
+              const pRes = await fetch('/api/profile', { credentials: 'include' })
+              const profileData = await pRes.json()
+              setProfile(profileData.data || {})
+
+              const wRes = await fetch('/api/settings/webhooks', { credentials: 'include' })
+              const webhooksData = await wRes.json()
+              setWebhooks(webhooksData.data || {})
+            } catch (err) {
+              console.error('Error fetching settings data:', err)
+            } finally {
+              setLoading(false)
+            }
+          }
+        )
+
+        return () => subscription.unsubscribe()
+      } catch (err) {
+        console.error('Settings auth setup error:', err)
+        setLoading(false)
+      }
+    }
+
+    const unsubscribe = setupAuth()
+    return () => {
+      unsubscribe?.then(fn => fn?.())
+    }
   }, [])
+
+  if (authenticated === false) {
+    return (
+      <>
+        <DashboardHeader title="Settings" description="Please sign in" />
+        <div className="card" style={{ textAlign: 'center', padding: '2.5rem' }}>
+          <p style={{ marginBottom: '1rem' }}>You are not signed in. Please log in to access settings.</p>
+          <Button onClick={() => (window.location.href = '/login')}>Go to Login</Button>
+        </div>
+      </>
+    )
+  }
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -123,6 +183,31 @@ export default function SettingsPage() {
             />
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
               n8n webhook URL for automatic document processing and embedding
+            </p>
+          </div>
+          <div style={{ marginBottom: '1rem' }}>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+              Intent Webhook URL (optional)
+            </label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="url"
+                value={webhooks.intent_webhook_url || ''}
+                onChange={(e) => setWebhooks({ ...webhooks, intent_webhook_url: e.target.value })}
+                placeholder="https://your-service.com/ai-intent"
+                style={{ flex: 1, padding: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', fontFamily: 'monospace', fontSize: '0.875rem' }}
+              />
+              <button type="button" className="btn" onClick={() => {
+                try {
+                  navigator.clipboard.writeText(webhooks.intent_webhook_url || '')
+                  showToast('Webhook URL copied to clipboard', 'success')
+                } catch (err) {
+                  showToast('Failed to copy webhook URL', 'error')
+                }
+              }}>Copy</button>
+            </div>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem' }}>
+              Optional: when an incoming message is classified as a Task (e.g. send_email), Salesboy will POST the intent payload here.
             </p>
           </div>
           <Button type="submit" disabled={savingWebhooks}>
