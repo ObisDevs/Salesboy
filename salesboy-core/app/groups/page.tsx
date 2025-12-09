@@ -1,6 +1,6 @@
+"use client";
 import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/button';
-import { toast } from '../components/ui/toast';
 
 interface Group {
   group_id: string;
@@ -22,7 +22,7 @@ export default function GroupsPage() {
         setLoading(false);
       })
       .catch(() => {
-        toast({ title: 'Failed to load groups', variant: 'destructive' });
+        window.alert('Failed to load groups');
         setLoading(false);
       });
   }, []);
@@ -44,9 +44,9 @@ export default function GroupsPage() {
           g.group_id === group.group_id ? { ...g, auto_reply: !g.auto_reply } : g
         )
       );
-      toast({ title: 'Group setting updated', variant: 'success' });
+      window.alert('Group setting updated');
     } catch {
-      toast({ title: 'Failed to update group', variant: 'destructive' });
+      window.alert('Failed to update group');
     } finally {
       setUpdating(null);
     }
@@ -71,7 +71,6 @@ export default function GroupsPage() {
               <Button
                 disabled={updating === group.group_id}
                 onClick={() => toggleIgnore(group)}
-                variant={group.auto_reply ? 'destructive' : 'default'}
               >
                 {group.auto_reply ? 'Ignore Messages' : 'Enable Auto Reply'}
               </Button>
