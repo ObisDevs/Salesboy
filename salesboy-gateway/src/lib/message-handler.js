@@ -27,10 +27,14 @@ class MessageHandler {
   }
 
   async handleIncomingMessage(userId, message) {
+    // Build payload matching `salesboy-core` webhook expectations:
+    // - `user_id`: id of the Salesboy user
+    // - `from`: sender WhatsApp id
+    // - `message`: plain text body to be forwarded to AI
     const payload = {
-      userId,
+      user_id: userId,
       from: message.from,
-      body: message.body,
+      message: message.body,
       timestamp: message.timestamp,
       hasMedia: message.hasMedia,
       type: message.type,
