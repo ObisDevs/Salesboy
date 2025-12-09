@@ -30,6 +30,12 @@ export async function POST(request: NextRequest) {
     
     console.log('📨 Webhook received:', { from, message, user_id })
     
+    // Ignore newsletters and status broadcasts
+    if (from.includes('@newsletter') || from.includes('@broadcast')) {
+      console.log('🚫 Ignoring newsletter/broadcast message')
+      return NextResponse.json({ message: 'Newsletter/broadcast ignored' })
+    }
+    
     // Use the user_id from the webhook (passed by gateway)
     const actualUserId = user_id
     
