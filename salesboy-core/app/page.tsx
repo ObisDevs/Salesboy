@@ -12,10 +12,14 @@ export default function Home() {
               Salesboy AI
             </h1>
           </Link>
+          
           <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
             <Link href="/product" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Product</Link>
             <Link href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Pricing</Link>
             <Link href="/about" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>About</Link>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <ThemeToggle />
             <Link href="/login">
               <button className="btn" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>Login</button>
@@ -24,22 +28,96 @@ export default function Home() {
         </div>
       </nav>
 
+      {/* Retro Text */}
+      <div style={{ padding: '1rem 2rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }} className="hero-grid">
+          <div style={{ overflow: 'hidden' }}>
+            <div className="retro-text">WHATSAPP SALES<br/>ASSISTANT</div>
+          </div>
+          <div></div>
+        </div>
+      </div>
+
       {/* Hero Section */}
-      <div style={{ padding: '4rem 2rem' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '3.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-            WhatsApp AI Automation
-          </h1>
-          <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
-            Transform your Nigerian business with intelligent WhatsApp automation powered by advanced AI and RAG technology
-          </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-            <Link href="/signup">
-              <button className="btn" style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>Get Started</button>
-            </Link>
-            <Link href="/product">
-              <button style={{ fontSize: '1.1rem', padding: '0.75rem 2rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}>Learn More</button>
-            </Link>
+      <div style={{ padding: '0 2rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }} className="hero-grid">
+          <div style={{ textAlign: 'left' }}>
+            <h1 style={{ fontSize: '3.5rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--text-primary)', lineHeight: '1.1' }}>
+              Smart Business Automation
+            </h1>
+            <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+              Transform your Nigerian business with intelligent WhatsApp automation powered by advanced AI and RAG technology
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <Link href="/signup">
+                <button className="btn" style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>Get Started</button>
+              </Link>
+              <Link href="/product">
+                <button style={{ fontSize: '1.1rem', padding: '0.75rem 2rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}>Learn More</button>
+              </Link>
+            </div>
+          </div>
+          
+          {/* Laptop Chat Simulation */}
+          <div className="laptop-animation" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="laptop-container">
+              <div className="laptop-screen">
+                <div className="browser-header">
+                  <div style={{ display: 'flex', gap: '0.3rem', padding: '0.5rem' }}>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ff5f56' }}></div>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ffbd2e' }}></div>
+                    <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#27c93f' }}></div>
+                  </div>
+                </div>
+                
+                {/* QR Code Scanning Phase */}
+                <div className="qr-scan-phase">
+                  <div className="qr-container">
+                    <div className="qr-code">
+                      <div className="qr-corner qr-tl"></div>
+                      <div className="qr-corner qr-tr"></div>
+                      <div className="qr-corner qr-bl"></div>
+                      <div className="qr-pattern"></div>
+                    </div>
+                    <div className="phone-scan">📱</div>
+                  </div>
+                  <div className="scan-text">Scan QR code with WhatsApp</div>
+                </div>
+                
+                {/* Success Check */}
+                <div className="success-phase">
+                  <div className="success-check">✓</div>
+                  <div className="success-text">Connected!</div>
+                </div>
+                
+                {/* Chat Window */}
+                <div className="chat-window">
+                  <div className="message customer-msg msg-1">
+                    <div className="message-bubble customer-bubble">Hi! I'm interested in your products</div>
+                  </div>
+                  <div className="typing-indicator typing-1">
+                    <div className="typing-bubble">
+                      <div className="typing-dots"><span></span><span></span><span></span></div>
+                    </div>
+                  </div>
+                  <div className="message ai-msg msg-2">
+                    <div className="message-bubble ai-bubble">Hello! I'd be happy to help you find the perfect product. What are you looking for?</div>
+                  </div>
+                  <div className="message customer-msg msg-3">
+                    <div className="message-bubble customer-bubble">I need a laptop for my business. What's available?</div>
+                  </div>
+                  <div className="typing-indicator typing-2">
+                    <div className="typing-bubble">
+                      <div className="typing-dots"><span></span><span></span><span></span></div>
+                    </div>
+                  </div>
+                  <div className="message ai-msg msg-4">
+                    <div className="message-bubble ai-bubble">We have excellent business laptops! The Dell Inspiron 15 (₦450,000) and HP ProBook 14 (₦380,000) are popular choices.</div>
+                  </div>
+                </div>
+              </div>
+              <div className="laptop-base"></div>
+            </div>
           </div>
         </div>
       </div>

@@ -121,10 +121,10 @@ export default function PricingPage() {
                 <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
                   Agent Max
                 </h3>
-                <div style={{ fontSize: '3rem', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
-                  ₦45,000
+                <div style={{ fontSize: '2rem', fontWeight: '600', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>
+                  Custom Pricing
                 </div>
-                <p style={{ color: 'var(--text-muted)' }}>per month</p>
+                <p style={{ color: 'var(--text-muted)' }}>Contact us for details</p>
               </div>
 
               <div style={{ marginBottom: '2rem' }}>
@@ -172,7 +172,7 @@ export default function PricingPage() {
               </div>
 
               <Link href="/about#contact">
-                <button style={{ width: '100%', fontSize: '1.1rem', padding: '0.75rem', background: 'var(--text-muted)', color: 'white', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+                <button className="btn" style={{ width: '100%', fontSize: '1.1rem', padding: '0.75rem' }}>
                   Contact Us
                 </button>
               </Link>

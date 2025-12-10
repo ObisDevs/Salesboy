@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import ThemeToggle from '../components/ThemeToggle'
+import { FaRobot, FaBook, FaBullseye, FaShoppingCart, FaEnvelope, FaShieldAlt, FaWhatsapp, FaUpload, FaCogs } from 'react-icons/fa'
 
 export default function ProductPage() {
   return (
@@ -39,54 +40,72 @@ export default function ProductPage() {
           {/* Features Grid */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '4rem' }}>
             <div className="card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                🤖 AI-Powered Responses
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <FaRobot style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  AI-Powered Responses
+                </h3>
+              </div>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 Advanced language models understand customer queries and provide intelligent, contextual responses in real-time.
               </p>
             </div>
 
             <div className="card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                📚 RAG Knowledge Base
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <FaBook style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  RAG Knowledge Base
+                </h3>
+              </div>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 Upload your business documents and let AI retrieve accurate information to answer customer questions.
               </p>
             </div>
 
             <div className="card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                🎯 Intent Classification
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <FaBullseye style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  Intent Classification
+                </h3>
+              </div>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 Automatically classify customer messages and route them to appropriate workflows or human agents.
               </p>
             </div>
 
             <div className="card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                🛍️ Product Catalog Integration
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <FaShoppingCart style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  Product Catalog Integration
+                </h3>
+              </div>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 Seamlessly integrate your product catalog for instant pricing and availability information.
               </p>
             </div>
 
             <div className="card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                📧 Email & Meeting Automation
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <FaEnvelope style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  Email & Meeting Automation
+                </h3>
+              </div>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 Automatically send emails and schedule meetings based on customer interactions.
               </p>
             </div>
 
             <div className="card">
-              <h3 style={{ fontSize: '1.25rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                🔒 Enterprise Security
-              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                <FaShieldAlt style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
+                <h3 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                  Enterprise Security
+                </h3>
+              </div>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 HMAC encryption, secure data handling, and user isolation ensure your business data stays protected.
               </p>
@@ -100,17 +119,53 @@ export default function ProductPage() {
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>1️⃣</div>
+                <div style={{ 
+                  width: '60px', 
+                  height: '60px', 
+                  borderRadius: '50%', 
+                  background: 'var(--accent)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  margin: '0 auto 1rem',
+                  color: 'white'
+                }}>
+                  <FaWhatsapp style={{ fontSize: '1.5rem' }} />
+                </div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.5rem' }}>Connect WhatsApp</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Scan QR code to connect your WhatsApp Business account</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>2️⃣</div>
+                <div style={{ 
+                  width: '60px', 
+                  height: '60px', 
+                  borderRadius: '50%', 
+                  background: 'var(--accent)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  margin: '0 auto 1rem',
+                  color: 'white'
+                }}>
+                  <FaUpload style={{ fontSize: '1.5rem' }} />
+                </div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.5rem' }}>Upload Knowledge</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Add your business documents and product catalog</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>3️⃣</div>
+                <div style={{ 
+                  width: '60px', 
+                  height: '60px', 
+                  borderRadius: '50%', 
+                  background: 'var(--accent)', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center', 
+                  margin: '0 auto 1rem',
+                  color: 'white'
+                }}>
+                  <FaCogs style={{ fontSize: '1.5rem' }} />
+                </div>
                 <h3 style={{ fontSize: '1.1rem', fontWeight: '600', marginBottom: '0.5rem' }}>AI Automation</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Let AI handle customer queries automatically</p>
               </div>
