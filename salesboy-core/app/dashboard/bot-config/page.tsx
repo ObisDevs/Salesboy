@@ -184,6 +184,12 @@ export default function BotConfigPage() {
               >
                 {uploadingProducts ? <><LoadingSpinner /> Uploading...</> : 'Upload CSV'}
               </Button>
+              <Button 
+                onClick={() => window.location.href = '/dashboard/products'}
+                style={{ background: 'var(--success)' }}
+              >
+                Preview Products
+              </Button>
             </div>
             
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>

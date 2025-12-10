@@ -16,6 +16,7 @@ export default function Sidebar() {
     { href: '/dashboard', label: 'Overview', icon: '◆' },
     { href: '/dashboard/sessions', label: 'Sessions', icon: '◇' },
     { href: '/dashboard/kb', label: 'Knowledge Base', icon: '◈' },
+    { href: '/dashboard/products', label: 'Products', icon: '◊' },
     { href: '/dashboard/groups', label: 'Groups', icon: '◉' },
     { href: '/dashboard/whitelist', label: 'Whitelist', icon: '◎' },
     { href: '/dashboard/logs', label: 'Logs', icon: '◐' },
