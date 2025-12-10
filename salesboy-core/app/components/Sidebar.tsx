@@ -31,7 +31,8 @@ export default function Sidebar() {
       padding: '2rem 1rem',
       minHeight: '100vh'
     }}>
-      <div style={{ marginBottom: '2rem' }}>
+      <div style={{ marginBottom: '2rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <img src="/favicon.svg" alt="Salesboy Logo" style={{ width: '32px', height: '32px' }} />
         <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--accent)' }}>
           Salesboy AI
         </h2>

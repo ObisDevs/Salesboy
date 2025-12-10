@@ -6,13 +6,16 @@ export default function Home() {
     <div style={{ minHeight: '100vh', padding: '2rem' }}>
       <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-              Salesboy AI
-            </h1>
-            <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>
-              WhatsApp Business Automation
-            </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <img src="/favicon.svg" alt="Salesboy Logo" style={{ width: '48px', height: '48px' }} />
+            <div>
+              <h1 style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+                Salesboy AI
+              </h1>
+              <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>
+                WhatsApp Business Automation
+              </p>
+            </div>
           </div>
           <ThemeToggle />
         </div>
