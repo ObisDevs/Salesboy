@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 import Sidebar from '../components/Sidebar'
 import { ToastProvider } from '../components/ui/toast'
-import { SessionManager } from '@/lib/session-manager'
 
 export default function DashboardLayout({
   children,
@@ -16,62 +15,61 @@ export default function DashboardLayout({
 
   useEffect(() => {
     const checkAccess = async () => {
+      console.log('[Dashboard Layout] Starting access check...')
+      
       const supabase = getSupabaseBrowserClient()
       const { data: { session } } = await supabase.auth.getSession()
       
+      console.log('[Dashboard Layout] Auth session:', { hasSession: !!session, userId: session?.user?.id })
+      
       if (!session) {
+        console.log('[Dashboard Layout] No session, redirecting to login')
         router.push('/login')
         return
       }
 
-      // Validate session for single sign-on
-      const sessionValid = await SessionManager.validateSession()
-      if (!sessionValid) {
-        // Session manager will handle redirect
-        return
-      }
-
-      // Check payment status with timeout
+      // Check subscription directly from Supabase
+      console.log('[Dashboard Layout] Checking subscription...')
       try {
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
-        
-        const res = await fetch('/api/payment/status', {
-          signal: controller.signal,
-          credentials: 'include'
+        const { data: userPlan, error } = await supabase
+          .from('user_plans')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .single()
+
+        console.log('[Dashboard Layout] Subscription check result:', { 
+          hasData: !!userPlan, 
+          error: error?.message,
+          status: userPlan?.status,
+          expiresAt: userPlan?.expires_at 
         })
-        clearTimeout(timeoutId)
-        
-        if (!res.ok) {
-          console.error('Payment status check failed with status:', res.status)
-          // On error, allow access but log the issue
-          setLoading(false)
-          return
+
+        if (error && error.code !== 'PGRST116') {
+          console.error('[Dashboard Layout] Error fetching subscription:', error)
         }
-        
-        const data = await res.json()
-        
-        if (!data.hasActivePlan) {
+
+        const hasActivePlan = userPlan && 
+          userPlan.status === 'active' && 
+          new Date(userPlan.expires_at) > new Date()
+
+        console.log('[Dashboard Layout] Has active plan:', hasActivePlan)
+
+        if (!hasActivePlan) {
+          console.log('[Dashboard Layout] No active plan, redirecting to payment')
           router.push('/payment')
           return
         }
-        
-        // Start session validation
-        SessionManager.startSessionValidation()
+
+        console.log('[Dashboard Layout] Access granted, loading dashboard')
         setLoading(false)
       } catch (error: any) {
-        console.error('Payment status check failed:', error.message)
-        // On timeout or error, allow access to prevent being stuck
+        console.error('[Dashboard Layout] Subscription check failed:', error.message)
+        // On error, allow access to prevent being stuck
         setLoading(false)
       }
     }
 
     checkAccess()
-    
-    // Cleanup on unmount
-    return () => {
-      SessionManager.stopSessionValidation()
-    }
   }, [])
 
   if (loading) {
