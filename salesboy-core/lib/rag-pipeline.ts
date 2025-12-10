@@ -31,10 +31,10 @@ export async function retrieveContext(
     topScores: searchResults.matches?.slice(0, 3).map(m => m.score)
   })
   
-  // Get user's bot config
+  // Get user's bot config with business info
   const { data: botConfig } = await supabaseAdmin
     .from('bot_config')
-    .select('system_prompt, metadata')
+    .select('system_prompt, business_name, business_email, metadata')
     .eq('user_id', userId)
     .single()
   
@@ -51,9 +51,17 @@ export async function retrieveContext(
   
   console.log('Bot config in retrieveContext:', { hasConfig: !!botConfig, prompt: botConfig?.system_prompt?.substring(0, 50) })
   
+  // Build enhanced system prompt with business context
+  let enhancedPrompt = botConfig?.system_prompt || 'You are a helpful AI assistant.'
+  
+  if (botConfig?.business_name || botConfig?.business_email) {
+    const businessContext = `\n\nBUSINESS CONTEXT:\n- You represent: ${botConfig.business_name || 'this business'}\n- Business email: ${botConfig.business_email || 'not provided'}\n- When customers want to contact the business, use this email\n- When sending info TO customers, ask for their email first`
+    enhancedPrompt += businessContext
+  }
+  
   return {
     chunks,
-    systemPrompt: botConfig?.system_prompt || 'You are a helpful AI assistant.'
+    systemPrompt: enhancedPrompt
   }
 }
 
@@ -94,7 +102,15 @@ Respond helpfully.`
   }
 
   const response = await generateResponse(prompt, context.systemPrompt, temperature || 0.7)
-  return response.content.trim()
+  
+  // Clean up response - remove placeholders
+  let cleanedResponse = response.content.trim()
+  cleanedResponse = cleanedResponse.replace(/\[Your Name\]/g, '')
+  cleanedResponse = cleanedResponse.replace(/\[Name\]/g, '')
+  cleanedResponse = cleanedResponse.replace(/Best regards,\s*/g, '')
+  cleanedResponse = cleanedResponse.replace(/Sincerely,\s*/g, '')
+  
+  return cleanedResponse.trim()
 }
 
 export async function processMessage(
@@ -103,10 +119,10 @@ export async function processMessage(
   conversationContext?: string
 ): Promise<string> {
   try {
-    // Get bot config
+    // Get bot config with business info
     const { data: botConfig } = await supabaseAdmin
       .from('bot_config')
-      .select('system_prompt, temperature')
+      .select('system_prompt, temperature, business_name, business_email')
       .eq('user_id', userId)
       .single()
     

@@ -23,10 +23,16 @@ ANALYZE the conversation and determine:
 3. Whether to execute the task or keep collecting
 
 TASK TYPES & REQUIRED INFO:
-- **send_email**: reason, urgency (optional)
+- **send_email**: 
+  - To business: reason, urgency (optional)
+  - To customer: reason, customer_email
 - **book_meeting**: reason, preferred_date, preferred_time (optional)
 - **place_order**: items, quantity, customer_info (optional)
 - **human_handoff**: reason, urgency (optional)
+
+EMAIL LOGIC:
+- "Email me", "Send to my email" = send TO customer (need customer_email)
+- "Email your team", "Notify via email" = send TO business (no email needed)
 
 RETURN JSON:
 {
@@ -63,12 +69,21 @@ export async function classifyIntent(
     .eq('status', 'collecting')
     .single()
 
+  // Get business context
+  const { data: botConfig } = await supabaseAdmin
+    .from('bot_config')
+    .select('business_name, business_email')
+    .eq('user_id', userId)
+    .single()
+
+  const businessContext = botConfig ? `\nBUSINESS: ${botConfig.business_name || 'Unknown'} (${botConfig.business_email || 'no email'})` : ''
+
   const prompt = `CONVERSATION HISTORY:
 ${conversationHistory}
 
 CURRENT MESSAGE: "${message}"
 
-ACTIVE INTENT: ${activeIntent ? JSON.stringify(activeIntent) : 'None'}
+ACTIVE INTENT: ${activeIntent ? JSON.stringify(activeIntent) : 'None'}${businessContext}
 
 Analyze and classify this message in context.`
   
