@@ -83,6 +83,57 @@ export default function BotConfigPage() {
             </p>
           </div>
 
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600' }}>Business Information</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Add your business details so the AI can represent your company properly and handle email requests correctly.
+            </p>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                  Business Name
+                </label>
+                <input
+                  type="text"
+                  value={config.business_name || ''}
+                  onChange={(e) => setConfig({ ...config, business_name: e.target.value })}
+                  placeholder="e.g. Obisdev Tech"
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.75rem', 
+                    borderRadius: '6px', 
+                    border: '1px solid var(--border)', 
+                    background: 'var(--bg-primary)' 
+                  }}
+                />
+              </div>
+              
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+                  Business Email
+                </label>
+                <input
+                  type="email"
+                  value={config.business_email || ''}
+                  onChange={(e) => setConfig({ ...config, business_email: e.target.value })}
+                  placeholder="e.g. info@obisdev.com"
+                  style={{ 
+                    width: '100%', 
+                    padding: '0.75rem', 
+                    borderRadius: '6px', 
+                    border: '1px solid var(--border)', 
+                    background: 'var(--bg-primary)' 
+                  }}
+                />
+              </div>
+            </div>
+            
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              The AI will use this information to represent your business and handle email notifications properly.
+            </p>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>

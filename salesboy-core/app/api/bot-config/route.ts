@@ -58,6 +58,8 @@ export async function PUT(request: NextRequest) {
         temperature: body.temperature,
         model: body.model,
         max_tokens: body.max_tokens,
+        business_name: body.business_name,
+        business_email: body.business_email,
         metadata: body.metadata || {}
       }, {
         onConflict: 'user_id'

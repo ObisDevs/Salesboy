@@ -55,8 +55,6 @@ export async function POST(request: NextRequest) {
           temperature: 0.7,
           model: 'mistral',
           max_tokens: 150,
-          business_name: 'My Business',
-          business_email: email,
           metadata: {}
         })
 
