@@ -13,13 +13,17 @@ interface Product {
   category?: string
   sku?: string
   in_stock: boolean
+  created_at?: string
 }
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
   const [showAddForm, setShowAddForm] = useState(false)
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'time'>('time')
+  const [filterInStock, setFilterInStock] = useState<'all' | 'in_stock' | 'out_of_stock'>('all')
   const { showToast } = useToast()
 
   const fetchProducts = async () => {
@@ -35,9 +39,39 @@ export default function ProductsPage() {
     }
   }
 
+  const applyFiltersAndSort = () => {
+    let filtered = [...products]
+    
+    // Apply stock filter
+    if (filterInStock === 'in_stock') {
+      filtered = filtered.filter(p => p.in_stock)
+    } else if (filterInStock === 'out_of_stock') {
+      filtered = filtered.filter(p => !p.in_stock)
+    }
+    
+    // Apply sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case 'name':
+          return a.product_name.localeCompare(b.product_name)
+        case 'price':
+          return b.price - a.price
+        case 'time':
+        default:
+          return new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime()
+      }
+    })
+    
+    setFilteredProducts(filtered)
+  }
+
   useEffect(() => {
     fetchProducts()
   }, [])
+
+  useEffect(() => {
+    applyFiltersAndSort()
+  }, [products, sortBy, filterInStock])
 
   const handleSaveProduct = async (product: Partial<Product>) => {
     try {
@@ -80,13 +114,59 @@ export default function ProductsPage() {
       <DashboardHeader title="Product Catalog" description="Manage your product inventory" />
       
       <div className="card">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: '500' }}>Products</h2>
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <Button onClick={() => setShowAddForm(true)}>Add Product</Button>
-            <Button onClick={fetchProducts} disabled={loading}>
-              {loading ? <LoadingSpinner /> : 'Refresh'}
-            </Button>
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '500' }}>Products</h2>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <Button onClick={() => setShowAddForm(true)}>Add Product</Button>
+              <Button onClick={fetchProducts} disabled={loading}>
+                {loading ? <LoadingSpinner /> : 'Refresh'}
+              </Button>
+            </div>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Sort by:</span>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'name' | 'price' | 'time')}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)',
+                  fontSize: '0.875rem'
+                }}
+              >
+                <option value="time">Date Added</option>
+                <option value="name">Name (A-Z)</option>
+                <option value="price">Price (High-Low)</option>
+              </select>
+            </div>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>Filter:</span>
+              <select
+                value={filterInStock}
+                onChange={(e) => setFilterInStock(e.target.value as 'all' | 'in_stock' | 'out_of_stock')}
+                style={{
+                  padding: '0.5rem',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--bg-primary)',
+                  fontSize: '0.875rem'
+                }}
+              >
+                <option value="all">All Products</option>
+                <option value="in_stock">In Stock Only</option>
+                <option value="out_of_stock">Out of Stock</option>
+              </select>
+            </div>
+            
+            <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+              Showing {filteredProducts.length} of {products.length} products
+            </div>
           </div>
         </div>
 
@@ -95,7 +175,7 @@ export default function ProductsPage() {
             <LoadingSpinner />
             <p style={{ marginTop: '1rem', color: 'var(--text-muted)' }}>Loading products...</p>
           </div>
-        ) : products.length === 0 ? (
+        ) : filteredProducts.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
             No products found. Add your first product or upload a CSV file.
           </div>
@@ -112,7 +192,7 @@ export default function ProductsPage() {
                 </tr>
               </thead>
               <tbody>
-                {products.map((product) => (
+                {filteredProducts.map((product) => (
                   <tr key={product.id} style={{ borderBottom: '1px solid var(--border)' }}>
                     <td style={{ padding: '0.75rem' }}>
                       <div style={{ fontWeight: '500' }}>{product.product_name}</div>
