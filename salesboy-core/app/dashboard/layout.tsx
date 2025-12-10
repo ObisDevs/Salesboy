@@ -85,16 +85,15 @@ export default function DashboardLayout({
 
   return (
     <ToastProvider>
-      <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }} className="md:flex-row">
+      <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
         <Sidebar />
         <main style={{ 
           flex: 1, 
-          padding: '1rem', 
+          padding: '2rem', 
           maxWidth: '100%', 
           overflow: 'auto',
-          paddingTop: '1rem'
-        }} className="md:p-8">
-          <div style={{ display: 'none' }} id="session-check" />
+          background: 'var(--bg-primary)'
+        }}>
           {children}
         </main>
       </div>
