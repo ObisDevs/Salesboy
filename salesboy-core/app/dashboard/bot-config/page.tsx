@@ -98,7 +98,7 @@ export default function BotConfigPage() {
                   type="text"
                   value={config.business_name || ''}
                   onChange={(e) => setConfig({ ...config, business_name: e.target.value })}
-                  placeholder="e.g. Obisdev Tech"
+                  placeholder="e.g. Johnson & Associates"
                   style={{ 
                     width: '100%', 
                     padding: '0.75rem', 
@@ -117,7 +117,7 @@ export default function BotConfigPage() {
                   type="email"
                   value={config.business_email || ''}
                   onChange={(e) => setConfig({ ...config, business_email: e.target.value })}
-                  placeholder="e.g. info@obisdev.com"
+                  placeholder="e.g. info@johnsonassociates.com"
                   style={{ 
                     width: '100%', 
                     padding: '0.75rem', 
