@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { validateHmac, generateHmac } from '@/lib/hmac'
 import { supabaseAdmin } from '@/lib/supabase'
-import { classifyIntent } from '@/lib/intent-classifier'
+import { classifyIntent, getTaskAcknowledgment } from '@/lib/intent-classifier'
 import { processMessage } from '@/lib/rag-pipeline'
 import { sendMessage } from '@/lib/gateway-client'
 import { forwardTaskToN8n } from '@/lib/n8n-client'
@@ -30,10 +30,10 @@ export async function POST(request: NextRequest) {
     
     console.log('📨 Webhook received:', { from, message, user_id })
     
-    // Ignore newsletters and status broadcasts
-    if (from.includes('@newsletter') || from.includes('@broadcast')) {
-      console.log('🚫 Ignoring newsletter/broadcast message')
-      return NextResponse.json({ message: 'Newsletter/broadcast ignored' })
+    // Ignore newsletters, broadcasts, and status updates
+    if (from.includes('@newsletter') || from.includes('@broadcast') || from.includes('status@')) {
+      console.log('🚫 Ignoring newsletter/broadcast/status message')
+      return NextResponse.json({ message: 'Broadcast/status ignored' })
     }
     
     // Use the user_id from the webhook (passed by gateway)
@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
       direction: 'incoming'
     })
     
-    // STEP 1: Check conversation history to determine if intent classification is needed
-    const { data: chatHistory, error: historyError } = await supabaseAdmin
+    // Get conversation history
+    const { data: chatHistory } = await supabaseAdmin
       .from('chat_logs')
       .select('message_body, direction')
       .eq('user_id', actualUserId)
@@ -87,63 +87,36 @@ export async function POST(request: NextRequest) {
       .order('timestamp', { ascending: false })
       .limit(10)
     
-    const messageCount = chatHistory?.length || 0
-    const hasConversationHistory = messageCount > 2 // At least 2 messages exchanged
+    // Build conversation context
+    const conversationContext = chatHistory?.slice(0, 5).reverse().map((msg: any) => 
+      `${msg.direction === 'incoming' ? 'Customer' : 'Assistant'}: ${msg.message_body}`
+    ).join('\n') || ''
     
-    console.log(`📊 Message count: ${messageCount}, Has history: ${hasConversationHistory}`)
-    
+    console.log('🧠 Classifying intent with full context...')
     let intent
-    
-    // Only classify intent if user has chatted before (not first message)
-    if (!hasConversationHistory) {
-      console.log('👋 First message - skipping intent classification')
+    try {
+      intent = await classifyIntent(actualUserId, from, message, conversationContext)
+      console.log('✅ Intent classified:', intent)
+    } catch (error) {
+      console.error('❌ Intent classification failed:', error)
       intent = {
         intent: 'Response',
-        confidence: 1.0,
+        confidence: 0.5,
         task_type: null,
+        status: 'cancelled',
+        missing_info: [],
         payload: null,
-        raw_analysis: 'First message - building rapport'
-      }
-    } else {
-      // Check if message contains action keywords
-      const lowerMessage = message.toLowerCase()
-      const hasActionKeyword = /\b(send|email|mail|forward|share|book|schedule|meeting|appointment|order|buy|purchase|place order)\b/i.test(lowerMessage)
-      
-      if (!hasActionKeyword) {
-        // No action keywords - likely just a question
-        console.log('💬 No action keywords - Response intent')
-        intent = {
-          intent: 'Response',
-          confidence: 0.9,
-          task_type: null,
-          payload: null,
-          raw_analysis: 'Question or inquiry'
-        }
-      } else {
-        // Has action keywords - classify intent
-        console.log('🧠 Action detected, classifying intent...')
-        try {
-          intent = await classifyIntent(message)
-          console.log('✅ Intent classified:', intent)
-        } catch (error) {
-          console.error('❌ Intent classification failed:', error)
-          intent = {
-            intent: 'Response',
-            confidence: 0.5,
-            task_type: null,
-            payload: null,
-            raw_analysis: 'Classification failed, using fallback'
-          }
-        }
+        next_question: null,
+        raw_analysis: 'Classification failed, using fallback'
       }
     }
     
     let responseMessage = ''
     
-    // STEP 2: Handle based on intent
-    if (intent.intent === 'Task' && intent.task_type) {
-      // Task intent - forward to n8n and/or user's intent webhook, then acknowledge
-      console.log('🔄 Forwarding task to n8n and user webhook (if configured):', intent.task_type)
+    // Handle based on intent
+    if (intent.intent === 'Task' && intent.status === 'ready' && intent.task_type) {
+      // Execute task - forward to webhooks
+      console.log('🔄 Executing task:', intent.task_type)
 
       const taskPayload = {
         task_type: intent.task_type,
@@ -153,7 +126,7 @@ export async function POST(request: NextRequest) {
         original_message: message
       }
 
-      // First: forward to n8n (if configured in environment)
+      // Forward to n8n
       try {
         await forwardTaskToN8n(taskPayload)
         console.log('✅ Task forwarded to n8n')
@@ -161,7 +134,7 @@ export async function POST(request: NextRequest) {
         console.error('❌ Failed to forward task to n8n:', error)
       }
 
-      // Second: forward to user's configured intent webhook URL (if set)
+      // Forward to user webhook
       try {
         const intentWebhookUrl = profile?.metadata?.intent_webhook_url
         if (intentWebhookUrl) {
@@ -174,45 +147,30 @@ export async function POST(request: NextRequest) {
               'Content-Type': 'application/json',
               'X-Signature': `sha256=${signature}`
             },
-            body: payloadStr,
-            // user-provided webhooks may be slow; give a short timeout if runtime supports
+            body: payloadStr
           })
 
-          console.log('✅ Task forwarded to user intent webhook:', intentWebhookUrl)
-        } else {
-          console.log('ℹ️ No intent_webhook_url configured for user')
+          console.log('✅ Task forwarded to user webhook')
         }
       } catch (error) {
         console.error('❌ Failed to forward task to user webhook:', error)
       }
 
-      try {
-        responseMessage = getTaskAcknowledgment(intent.task_type)
-      } catch (err) {
-        responseMessage = "I'm working on that for you. I'll get back to you shortly!"
-      }
+      responseMessage = getTaskAcknowledgment(intent.task_type, intent.payload)
+
+    } else if (intent.intent === 'Collecting' && intent.next_question) {
+      // Still collecting info - ask next question
+      console.log('📝 Collecting info for:', intent.task_type)
+      responseMessage = intent.next_question
 
     } else {
-      // Response intent - use RAG pipeline with conversation context
+      // Regular response or cancelled intent
       console.log('💬 Generating AI response...')
       try {
-        // Build conversation context
-        const recentMessages = chatHistory?.slice(0, 5).reverse().map((msg: any) => 
-          `${msg.direction === 'incoming' ? 'Customer' : 'You'}: ${msg.message_body}`
-        ).join('\n') || ''
-        
-          console.log('Calling processMessage with:', { actualUserId, message, hasContext: !!recentMessages })
-          responseMessage = await processMessage(actualUserId, message, recentMessages)
-        console.log('✅ AI response generated:', responseMessage.substring(0, 50))
+        responseMessage = await processMessage(actualUserId, message, conversationContext)
+        console.log('✅ AI response generated')
       } catch (error: any) {
         console.error('❌ AI pipeline failed:', error)
-        console.error('Error details:', error.message, error.stack)
-        
-        // Check if API keys are configured
-        const hasGemini = !!process.env.GEMINI_API_KEY
-        const hasOpenAI = !!process.env.OPENAI_API_KEY
-        console.log('API Keys configured:', { hasGemini, hasOpenAI })
-        
         responseMessage = `Hello! Thanks for reaching out. I'm having a bit of trouble right now, but I'm here to help. Could you try asking again?`
       }
     }
@@ -249,13 +207,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function getTaskAcknowledgment(taskType: string): string {
-  const acknowledgments: Record<string, string> = {
-    send_email: "Got it! I'm processing your email request. You'll receive a confirmation shortly.",
-    book_calendar: "Perfect! I'm scheduling that for you now. I'll send you the details in a moment.",
-    create_order: "Great! I'm processing your order. You'll get a confirmation with all the details soon.",
-    human_handoff: "I've notified our team. Someone will reach out to you shortly!"
-  }
-  
-  return acknowledgments[taskType] || "I'm working on that for you. I'll get back to you shortly!"
-}

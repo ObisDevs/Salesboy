@@ -51,10 +51,10 @@ export async function POST(request: NextRequest) {
         .from('bot_config')
         .insert({
           user_id: userId,
-          system_prompt: `You are a helpful AI assistant for a small business. You respond to customer inquiries professionally and helpfully.`,
+          system_prompt: `You are a helpful business assistant. Be brief, friendly, and professional. Answer questions directly.`,
           temperature: 0.7,
           model: 'mistral',
-          max_tokens: 500,
+          max_tokens: 150,
           metadata: {}
         })
 

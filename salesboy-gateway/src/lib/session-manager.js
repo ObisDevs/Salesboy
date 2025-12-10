@@ -114,6 +114,11 @@ class SessionManager {
         return; // Message not for this client
       }
       
+      // Ignore broadcasts and status updates
+      if (message.from.includes('@broadcast') || message.from.includes('status@')) {
+        return;
+      }
+      
       logger.info(`Message received from ${message.from} for user ${userId}: ${message.body}`);
       
       // Forward to webhook

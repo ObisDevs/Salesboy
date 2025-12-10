@@ -71,53 +71,30 @@ export async function generateRAGResponse(
   const hasContext = context.chunks.length > 0 && context.chunks[0].text
   
   let prompt: string
-  
-  // Build prompt with conversation context
   let contextSection = ''
   
   if (conversationContext) {
     contextSection = `Recent conversation:
 ${conversationContext}
 
----
-
 `
   }
   
   if (hasContext) {
-    prompt = `${contextSection}Knowledge base information:
+    prompt = `${contextSection}Knowledge base:
 ${contextText}
 
----
+Customer: ${message}
 
-Customer's latest message: ${message}
-
-Respond naturally and helpfully. Use the knowledge base if relevant. Keep the conversation flowing naturally. Be warm and professional.`
+Respond helpfully using the knowledge base.`
   } else {
-    prompt = `${contextSection}Customer's latest message: ${message}
+    prompt = `${contextSection}Customer: ${message}
 
-Respond naturally and helpfully:
-- If it's a greeting, respond warmly and ask how you can help
-- If it's a question, answer with your knowledge
-- If it's about products/services, be helpful and engaging
-- Keep it conversational and friendly
-- Use Nigerian expressions naturally when appropriate`
+Respond helpfully.`
   }
 
   const response = await generateResponse(prompt, context.systemPrompt, temperature || 0.7)
-  
-  // Clean up response
-  let cleanedResponse = response.content.trim()
-  
-  // Remove any "I've notified" phrases if this isn't actually a handoff
-  if (!message.toLowerCase().includes('refund') && 
-      !message.toLowerCase().includes('complaint') && 
-      !message.toLowerCase().includes('broken')) {
-    cleanedResponse = cleanedResponse.replace(/I'?ve notified (our|the) team.*?\./gi, '')
-    cleanedResponse = cleanedResponse.replace(/Someone will get back to you.*?\./gi, '')
-  }
-  
-  return cleanedResponse.trim()
+  return response.content.trim()
 }
 
 export async function processMessage(
