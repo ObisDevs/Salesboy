@@ -136,14 +136,14 @@ export async function POST(request: NextRequest) {
         console.error('❌ Failed to forward task to n8n:', error)
       }
 
-      // Forward to user webhook
+      // Forward to user webhook (N8N)
       try {
-        const intentWebhookUrl = profile?.metadata?.intent_webhook_url
+        const intentWebhookUrl = profile?.metadata?.intent_webhook_url || profile?.metadata?.n8n_kb_webhook
         if (intentWebhookUrl) {
           const payloadStr = JSON.stringify(taskPayload)
           const signature = generateHmac(payloadStr)
 
-          await fetch(intentWebhookUrl, {
+          const response = await fetch(intentWebhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -152,7 +152,9 @@ export async function POST(request: NextRequest) {
             body: payloadStr
           })
 
-          console.log('✅ Task forwarded to user webhook')
+          console.log('✅ Task forwarded to user webhook:', response.status)
+        } else {
+          console.log('ℹ️ No webhook URL configured')
         }
       } catch (error) {
         console.error('❌ Failed to forward task to user webhook:', error)

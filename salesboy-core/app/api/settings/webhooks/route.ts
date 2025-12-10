@@ -65,7 +65,7 @@ export async function PUT(request: NextRequest) {
     const { error } = await supabaseAdmin
       .from('profiles')
       .update({ metadata: updatedMetadata })
-      .limit(1)
+      .eq('id', userId)
 
     if (error) {
       console.error('Profile update error:', error)
