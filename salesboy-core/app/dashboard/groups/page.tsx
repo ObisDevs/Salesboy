@@ -121,7 +121,7 @@ export default function GroupsPage() {
                 </div>
                 <div style={{ position: 'relative' }}>
                   <Button 
-                    onClick={() => toggleAutoReply(group.id, group.reply_enabled)}
+                    onClick={() => toggleAutoReply(group.id, group.auto_reply || false)}
                     disabled={!masterEnabled && !group.auto_reply}
                     style={{ 
                       background: group.auto_reply ? 'var(--success)' : 'var(--border)',
