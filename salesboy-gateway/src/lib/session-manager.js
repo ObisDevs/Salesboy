@@ -56,7 +56,8 @@ class SessionManager {
       client,
       qr: null,
       ready: false,
-      qrListeners: []
+      qrListeners: [],
+      myNumber: null
     };
 
     client.on('qr', async (qr) => {
@@ -68,9 +69,18 @@ class SessionManager {
       });
     });
 
-    client.on('ready', () => {
+    client.on('ready', async () => {
       logger.info(`WhatsApp client ready for user ${userId}`);
       sessionData.ready = true;
+      
+      // Store this client's WhatsApp number for message filtering
+      try {
+        const info = await client.info;
+        sessionData.myNumber = info?.wid?._serialized;
+        logger.info(`User ${userId} WhatsApp number: ${sessionData.myNumber}`);
+      } catch (err) {
+        logger.error(`Failed to get WhatsApp number for ${userId}:`, err);
+      }
     });
 
     client.on('authenticated', () => {
@@ -98,7 +108,13 @@ class SessionManager {
     });
 
     client.on('message', async (message) => {
-      logger.info(`Message received from ${message.from}: ${message.body}`);
+      // Only process messages sent TO this user's WhatsApp
+      // Skip if this message belongs to a different session
+      if (sessionData.myNumber && message.to && message.to !== sessionData.myNumber) {
+        return; // Message not for this client
+      }
+      
+      logger.info(`Message received from ${message.from} for user ${userId}: ${message.body}`);
       
       // Forward to webhook
       try {
