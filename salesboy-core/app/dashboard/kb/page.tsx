@@ -15,6 +15,7 @@ export default function KnowledgeBasePage() {
   const [files, setFiles] = useState<any[]>([])
   const [uploading, setUploading] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [clearing, setClearing] = useState(false)
   const [preview, setPreview] = useState<{ url: string, name: string, type: string } | null>(null)
   const [embedLogs, setEmbedLogs] = useState<Record<string, EmbedLog>>({})
   const { showToast } = useToast()
@@ -84,6 +85,28 @@ export default function KnowledgeBasePage() {
       showToast('Failed to delete file', 'error')
       // Restore on error
       await fetchFiles()
+    }
+  }
+
+  const clearAllKnowledge = async () => {
+    if (!confirm('⚠️ This will permanently delete ALL your knowledge base data and embeddings. This cannot be undone. Continue?')) return
+    
+    setClearing(true)
+    try {
+      const res = await fetch('/api/kb/clear', { method: 'DELETE' })
+      const result = await res.json()
+      
+      if (!res.ok) {
+        showToast('Failed to clear knowledge: ' + result.error, 'error')
+      } else {
+        showToast('✅ All knowledge base data cleared successfully', 'success')
+        setFiles([])
+        setEmbedLogs({})
+      }
+    } catch (error) {
+      showToast('Failed to clear knowledge base', 'error')
+    } finally {
+      setClearing(false)
     }
   }
 
@@ -167,7 +190,7 @@ export default function KnowledgeBasePage() {
       <DashboardHeader title="Knowledge Base" description="Upload documents for AI context" />
       
       <div className="card">
-        <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ marginBottom: '1.5rem', display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <input
             id="file-upload"
             type="file"
@@ -182,6 +205,16 @@ export default function KnowledgeBasePage() {
           >
             {uploading ? <><LoadingSpinner /> Uploading...</> : 'Upload Document'}
           </Button>
+          
+          {files.length > 0 && (
+            <Button 
+              onClick={clearAllKnowledge}
+              disabled={clearing}
+              style={{ background: '#dc2626' }}
+            >
+              {clearing ? <><LoadingSpinner /> Clearing...</> : 'Clear All Knowledge'}
+            </Button>
+          )}
         </div>
 
         {loading ? (

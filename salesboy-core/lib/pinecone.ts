@@ -40,3 +40,7 @@ export async function queryVectors(
 export async function deleteVectors(userId: string, ids: string[]) {
   return await index.namespace(`user_${userId}`).deleteMany(ids)
 }
+
+export async function clearAllVectors(userId: string) {
+  return await index.namespace(`user_${userId}`).deleteAll()
+}
