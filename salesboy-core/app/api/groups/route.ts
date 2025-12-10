@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAuth } from '@/lib/server-auth'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,7 +21,24 @@ export async function GET(request: NextRequest) {
     if (!res.ok) throw new Error('Failed to fetch groups')
 
     const data = await res.json()
-    return NextResponse.json({ data: data.groups || [] })
+    const groups = data.groups || []
+
+    // Get group settings from database
+    const { data: groupSettings } = await supabaseAdmin
+      .from('group_settings')
+      .select('group_id, auto_reply')
+      .eq('user_id', userId)
+
+    // Merge gateway groups with database settings
+    const groupsWithSettings = groups.map((group: any) => {
+      const setting = groupSettings?.find((s: any) => s.group_id === group.id)
+      return {
+        ...group,
+        auto_reply: setting?.auto_reply || false
+      }
+    })
+
+    return NextResponse.json({ data: groupsWithSettings })
   } catch (error: any) {
     console.error('Groups API error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })

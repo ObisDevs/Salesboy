@@ -39,6 +39,37 @@ export async function POST(request: NextRequest) {
     // Use the user_id from the webhook (passed by gateway)
     const actualUserId = user_id
     
+    // Check if message is from a group
+    const isGroupMessage = from.includes('@g.us')
+    if (isGroupMessage) {
+      // Get user's master group reply setting
+      const { data: botConfig } = await supabaseAdmin
+        .from('bot_config')
+        .select('reply_to_groups')
+        .eq('user_id', actualUserId)
+        .single()
+      
+      if (!botConfig?.reply_to_groups) {
+        console.log('🚫 Ignoring group message - master group replies disabled')
+        return NextResponse.json({ message: 'Group replies disabled in config' })
+      }
+      
+      // Check if this specific group has replies enabled
+      const { data: groupSetting } = await supabaseAdmin
+        .from('group_settings')
+        .select('auto_reply')
+        .eq('user_id', actualUserId)
+        .eq('group_id', from)
+        .single()
+      
+      if (!groupSetting?.auto_reply) {
+        console.log('🚫 Ignoring group message - individual group replies disabled')
+        return NextResponse.json({ message: 'Group replies disabled for this group' })
+      }
+      
+      console.log('✅ Processing group message - both master and group replies enabled')
+    }
+    
     if (!actualUserId) {
       console.warn('⚠️ No user_id in webhook payload')
       return NextResponse.json({ error: 'user_id required' }, { status: 400 })

@@ -60,6 +60,7 @@ export async function PUT(request: NextRequest) {
         max_tokens: body.max_tokens,
         business_name: body.business_name,
         business_email: body.business_email,
+        reply_to_groups: body.reply_to_groups,
         metadata: body.metadata || {}
       }, {
         onConflict: 'user_id'

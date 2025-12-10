@@ -191,6 +191,27 @@ export default function BotConfigPage() {
             </p>
           </div>
 
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600' }}>Group Settings</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Control whether the AI responds to WhatsApp group messages.
+            </p>
+            
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
+              <input
+                type="checkbox"
+                checked={config.reply_to_groups || false}
+                onChange={(e) => setConfig({ ...config, reply_to_groups: e.target.checked })}
+                style={{ width: '16px', height: '16px' }}
+              />
+              <span style={{ fontSize: '0.875rem' }}>Reply to group messages</span>
+            </label>
+            
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              When disabled, the AI will only respond to direct messages, not group chats.
+            </p>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
