@@ -36,6 +36,11 @@
   margin: 0;
 }
 
+html {
+  text-size-adjust: 100%;
+  -webkit-text-size-adjust: 100%;
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -473,7 +478,10 @@ body {
 }
 
 @keyframes fadeOut {
-  to { opacity: 0; visibility: hidden; }
+  to { 
+    opacity: 0;
+    pointer-events: none;
+  }
 }
 
 .message {

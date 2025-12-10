@@ -69,7 +69,11 @@ export default function GroupsPage() {
         <div style={{ marginBottom: '1.5rem' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '500' }}>Groups</h2>
-            <Button onClick={fetchGroups} disabled={loading}>
+            <Button 
+              onClick={fetchGroups} 
+              disabled={loading}
+              aria-label={loading ? 'Refreshing groups' : 'Refresh groups'}
+            >
               {loading ? <LoadingSpinner /> : 'Refresh'}
             </Button>
           </div>
@@ -128,7 +132,8 @@ export default function GroupsPage() {
                       minWidth: '120px',
                       opacity: !masterEnabled && !group.auto_reply ? 0.5 : 1
                     }}
-                    title={!masterEnabled ? 'Enable group replies in Bot Config first' : ''}
+                    aria-label={`Toggle auto-reply for ${group.name}. Currently ${group.auto_reply ? 'enabled' : 'disabled'}`}
+                    title={!masterEnabled ? 'Enable group replies in Bot Config first' : `Toggle auto-reply for ${group.name}`}
                   >
                     {group.auto_reply ? 'Auto-Reply ON' : 'Auto-Reply OFF'}
                   </Button>

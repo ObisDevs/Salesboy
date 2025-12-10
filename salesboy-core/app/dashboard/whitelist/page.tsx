@@ -82,29 +82,45 @@ export default function WhitelistPage() {
 
         {showForm && (
           <form onSubmit={addNumber} style={{ marginBottom: '2rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+            <label htmlFor="phone_number" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>Phone Number</label>
             <input
+              id="phone_number"
+              name="phone_number"
               type="text"
-              placeholder="Phone Number (e.g., 2349058653283@c.us)"
+              placeholder="e.g., 2349058653283@c.us"
               value={formData.phone_number}
               onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
               required
+              aria-label="Phone number"
+              aria-invalid={!!errors.phone_number}
+              aria-describedby={errors.phone_number ? 'phone_error' : undefined}
               style={{ width: '100%', padding: '0.75rem', marginBottom: '0.25rem', borderRadius: '6px', border: `1px solid ${errors.phone_number ? 'var(--error)' : 'var(--border)'}`, background: 'var(--bg-primary)' }}
             />
-            {errors.phone_number && <p style={{ color: 'var(--error)', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{errors.phone_number}</p>}
+            {errors.phone_number && <p id="phone_error" style={{ color: 'var(--error)', fontSize: '0.75rem', marginBottom: '0.75rem' }}>{errors.phone_number}</p>}
+            
+            <label htmlFor="name" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>Name</label>
             <input
+              id="name"
+              name="name"
               type="text"
-              placeholder="Name"
+              placeholder="Contact name"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              aria-label="Contact name"
               style={{ width: '100%', padding: '0.75rem', marginBottom: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)' }}
             />
+            
+            <label htmlFor="notes" style={{ display: 'block', marginBottom: '0.5rem', fontWeight: '500', fontSize: '0.875rem' }}>Notes (optional)</label>
             <textarea
-              placeholder="Notes (optional)"
+              id="notes"
+              name="notes"
+              placeholder="Additional notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+              aria-label="Notes"
               style={{ width: '100%', padding: '0.75rem', marginBottom: '0.75rem', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-primary)', minHeight: '80px' }}
             />
-            <Button type="submit" disabled={loading}>Add to Whitelist</Button>
+            <Button type="submit" disabled={loading} aria-label="Add number to whitelist">Add to Whitelist</Button>
           </form>
         )}
 
