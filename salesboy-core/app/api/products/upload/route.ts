@@ -8,6 +8,14 @@ export async function POST(request: NextRequest) {
     if (authError) return authError
 
     const { userId } = auth!
+    
+    // Ensure product_catalog table exists
+    try {
+      await supabaseAdmin.rpc('create_product_catalog_table')
+    } catch (rpcError) {
+      console.log('RPC function not available, table should exist')
+    }
+    
     const formData = await request.formData()
     const file = formData.get('file') as File
 
