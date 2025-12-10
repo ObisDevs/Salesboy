@@ -3,6 +3,8 @@ import { requireAuth } from '@/lib/server-auth'
 import { clearAllVectors } from '@/lib/pinecone'
 import { supabaseAdmin } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export async function DELETE(request: NextRequest) {
   try {
     const { error: authError, auth } = await requireAuth(request)
