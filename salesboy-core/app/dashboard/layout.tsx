@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 import Sidebar from '../components/Sidebar'
 import { ToastProvider } from '../components/ui/toast'
+import { SessionManager } from '@/lib/session-manager'
 
 export default function DashboardLayout({
   children,
@@ -23,6 +24,13 @@ export default function DashboardLayout({
         return
       }
 
+      // Validate session for single sign-on
+      const sessionValid = await SessionManager.validateSession()
+      if (!sessionValid) {
+        // Session manager will handle redirect
+        return
+      }
+
       // Check payment status
       try {
         const res = await fetch('/api/payment/status')
@@ -33,6 +41,8 @@ export default function DashboardLayout({
           return
         }
         
+        // Start session validation
+        SessionManager.startSessionValidation()
         setLoading(false)
       } catch (error) {
         console.error('Payment status check failed:', error)
@@ -41,6 +51,11 @@ export default function DashboardLayout({
     }
 
     checkAccess()
+    
+    // Cleanup on unmount
+    return () => {
+      SessionManager.stopSessionValidation()
+    }
   }, [])
 
   if (loading) {
@@ -65,6 +80,7 @@ export default function DashboardLayout({
           overflow: 'auto',
           paddingTop: '1rem'
         }} className="md:p-8">
+          <div style={{ display: 'none' }} id="session-check" />
           {children}
         </main>
       </div>

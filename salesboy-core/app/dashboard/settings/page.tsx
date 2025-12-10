@@ -217,6 +217,11 @@ export default function SettingsPage() {
       </div>
 
       <div className="card" style={{ marginTop: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: '500' }}>Security</h2>
+        <ChangePasswordForm />
+      </div>
+
+      <div className="card" style={{ marginTop: '1.5rem' }}>
         <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: '500' }}>Contact Developer</h2>
         <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
           Need help with your Salesboy AI setup? Have questions or feedback?
@@ -242,5 +247,121 @@ export default function SettingsPage() {
         </div>
       </div>
     </>
+  )
+}
+
+function ChangePasswordForm() {
+  const [formData, setFormData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  })
+  const [loading, setLoading] = useState(false)
+  const { showToast } = useToast()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    if (formData.newPassword !== formData.confirmPassword) {
+      showToast('New passwords do not match', 'error')
+      return
+    }
+
+    if (formData.newPassword.length < 6) {
+      showToast('New password must be at least 6 characters', 'error')
+      return
+    }
+
+    setLoading(true)
+    try {
+      const res = await fetch('/api/auth/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'change',
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword
+        })
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        showToast('Password updated successfully', 'success')
+        setFormData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      } else {
+        showToast(data.error || 'Failed to update password', 'error')
+      }
+    } catch (error) {
+      showToast('Network error. Please try again.', 'error')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <div>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+          Current Password
+        </label>
+        <input
+          type="password"
+          value={formData.currentPassword}
+          onChange={(e) => setFormData({ ...formData, currentPassword: e.target.value })}
+          required
+          style={{ 
+            width: '100%', 
+            padding: '0.75rem', 
+            borderRadius: '6px', 
+            border: '1px solid var(--border)', 
+            background: 'var(--bg-primary)' 
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+          New Password
+        </label>
+        <input
+          type="password"
+          value={formData.newPassword}
+          onChange={(e) => setFormData({ ...formData, newPassword: e.target.value })}
+          required
+          minLength={6}
+          style={{ 
+            width: '100%', 
+            padding: '0.75rem', 
+            borderRadius: '6px', 
+            border: '1px solid var(--border)', 
+            background: 'var(--bg-primary)' 
+          }}
+        />
+      </div>
+
+      <div>
+        <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>
+          Confirm New Password
+        </label>
+        <input
+          type="password"
+          value={formData.confirmPassword}
+          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+          required
+          minLength={6}
+          style={{ 
+            width: '100%', 
+            padding: '0.75rem', 
+            borderRadius: '6px', 
+            border: '1px solid var(--border)', 
+            background: 'var(--bg-primary)' 
+          }}
+        />
+      </div>
+
+      <Button type="submit" disabled={loading} style={{ alignSelf: 'flex-start' }}>
+        {loading ? <><LoadingSpinner /> Updating...</> : 'Change Password'}
+      </Button>
+    </form>
   )
 }

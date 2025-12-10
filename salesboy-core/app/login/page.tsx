@@ -1,18 +1,24 @@
 'use client'
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import BackButton from '../components/BackButton'
+import { SessionManager } from '@/lib/session-manager'
 
-export default function LoginPage() {
+function LoginContent() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const message = searchParams.get('message')
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -29,8 +35,14 @@ export default function LoginPage() {
       setError(error.message)
       setLoading(false)
     } else if (data.session) {
-      // Force a hard refresh to update cookies
-      window.location.href = '/dashboard'
+      // Create session for single sign-on enforcement
+      try {
+        await SessionManager.createSession()
+        window.location.href = '/dashboard'
+      } catch (sessionError) {
+        console.error('Session creation failed:', sessionError)
+        window.location.href = '/dashboard'
+      }
     }
   }
 
@@ -45,12 +57,45 @@ export default function LoginPage() {
     if (error) setError(error.message)
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!resetEmail) return
+
+    setResetLoading(true)
+    try {
+      const res = await fetch('/api/auth/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset', email: resetEmail })
+      })
+
+      const data = await res.json()
+      if (res.ok) {
+        alert('Password reset email sent! Check your inbox.')
+        setShowForgotPassword(false)
+        setResetEmail('')
+      } else {
+        setError(data.error || 'Failed to send reset email')
+      }
+    } catch (error) {
+      setError('Network error. Please try again.')
+    } finally {
+      setResetLoading(false)
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="md:p-8">
       <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
         <BackButton href="/" label="Back to Home" />
         <h1 style={{ fontSize: '1.75rem', fontWeight: '600', marginBottom: '0.5rem' }} className="md:text-2xl">Login</h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Access your Salesboy AI dashboard</p>
+
+        {message && (
+          <div style={{ padding: '1rem', background: '#fef3c7', border: '1px solid #f59e0b', borderRadius: '8px', marginBottom: '1rem', color: '#92400e' }}>
+            {message}
+          </div>
+        )}
 
         {error && (
           <div style={{ padding: '1rem', background: '#fee', border: '1px solid #fcc', borderRadius: '8px', marginBottom: '1rem', color: '#c00' }}>
@@ -86,6 +131,22 @@ export default function LoginPage() {
           </Button>
         </form>
 
+        <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+          <button
+            onClick={() => setShowForgotPassword(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--accent)',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              fontSize: '0.875rem'
+            }}
+          >
+            Forgot Password?
+          </button>
+        </div>
+
         <div style={{ margin: '1.5rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
           OR
         </div>
@@ -107,6 +168,72 @@ export default function LoginPage() {
           </Link>
         </div>
       </div>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '1rem'
+        }}>
+          <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem' }}>Reset Password</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }}>
+              Enter your email address and we'll send you a link to reset your password.
+            </p>
+            
+            <form onSubmit={handleForgotPassword} style={{ marginBottom: '1rem' }}>
+              <div style={{ marginBottom: '1rem' }}>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.875rem', fontWeight: '500' }}>Email</label>
+                <Input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  required
+                />
+              </div>
+              
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <Button type="submit" disabled={resetLoading} style={{ flex: 1 }}>
+                  {resetLoading ? 'Sending...' : 'Send Reset Link'}
+                </Button>
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    setShowForgotPassword(false)
+                    setResetEmail('')
+                    setError('')
+                  }}
+                  style={{ background: 'var(--border)', color: 'var(--text-primary)' }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div>Loading...</div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
   )
 }
