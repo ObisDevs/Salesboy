@@ -222,7 +222,7 @@ export async function POST(request: NextRequest) {
         console.log('✅ AI response generated')
       } catch (error: any) {
         console.error('❌ AI pipeline failed:', error)
-        responseMessage = `Hello! Thanks for reaching out. I'm having a bit of trouble right now, but I'm here to help. Could you try asking again?`
+        responseMessage = `Thanks for reaching out. I'm having a bit of trouble right now, but I'm here to help. Could you try asking again?`
       }
     }
     
