@@ -177,17 +177,47 @@ export default function SessionsPage() {
 
       {qrCode && (
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '500', color: 'var(--accent)' }}>
               Scan QR Code
             </h2>
-            <Button onClick={() => setQrCode('')} style={{ background: '#6b7280' }}>Hide QR</Button>
+            <Button onClick={() => setQrCode('')} style={{ background: '#6b7280', fontSize: '0.875rem' }}>Hide QR</Button>
           </div>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem' }}>
-            Open WhatsApp on your phone and scan this QR code
+          
+          {/* Mobile Warning */}
+          <div style={{ 
+            background: '#fef3c7', 
+            border: '1px solid #f59e0b', 
+            borderRadius: '8px', 
+            padding: '1rem', 
+            marginBottom: '1.5rem',
+            display: 'block'
+          }} className="md:hidden">
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+              <span style={{ fontSize: '1.25rem' }}>📱</span>
+              <strong style={{ color: '#92400e' }}>Mobile Device Detected</strong>
+            </div>
+            <p style={{ color: '#92400e', fontSize: '0.875rem', margin: 0 }}>
+              For best experience, please use a computer/laptop to scan this QR code with your phone's WhatsApp camera.
+            </p>
+          </div>
+          
+          <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.875rem' }} className="md:text-base">
+            Open WhatsApp on your phone → Settings → Linked Devices → Link a Device → Scan this QR code
           </p>
-          <div style={{ display: 'flex', justifyContent: 'center' }}>
-            <img src={qrCode} alt="WhatsApp QR Code" style={{ maxWidth: '300px', border: '2px solid var(--border)', borderRadius: '8px' }} />
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '1rem' }}>
+            <img 
+              src={qrCode} 
+              alt="WhatsApp QR Code" 
+              style={{ 
+                maxWidth: '100%', 
+                width: '250px',
+                height: 'auto',
+                border: '2px solid var(--border)', 
+                borderRadius: '8px' 
+              }} 
+              className="md:w-80"
+            />
           </div>
         </div>
       )}

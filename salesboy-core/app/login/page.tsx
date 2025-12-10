@@ -5,6 +5,7 @@ import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import BackButton from '../components/BackButton'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -45,9 +46,10 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="md:p-8">
       <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Login</h1>
+        <BackButton href="/" label="Back to Home" />
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '600', marginBottom: '0.5rem' }} className="md:text-2xl">Login</h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Access your Salesboy AI dashboard</p>
 
         {error && (

@@ -12,6 +12,21 @@ export async function POST(request: NextRequest) {
 
     const { userId } = auth!
 
+    // Check if user has active plan
+    const { data: userPlan } = await supabaseAdmin
+      .from('user_plans')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+
+    const hasActivePlan = userPlan && 
+      userPlan.status === 'active' && 
+      new Date(userPlan.expires_at) > new Date()
+
+    if (!hasActivePlan) {
+      return NextResponse.json({ error: 'Active subscription required' }, { status: 403 })
+    }
+
     console.log(`[sessions/start] Request by userId=${userId}`)
 
     // Start session via gateway

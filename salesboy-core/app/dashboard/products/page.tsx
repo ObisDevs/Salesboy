@@ -202,7 +202,7 @@ export default function ProductsPage() {
                         </div>
                       )}
                     </td>
-                    <td style={{ padding: '0.75rem' }}>${product.price}</td>
+                    <td style={{ padding: '0.75rem' }}>₦{product.price}</td>
                     <td style={{ padding: '0.75rem' }}>{product.category || '-'}</td>
                     <td style={{ padding: '0.75rem' }}>
                       <span style={{ 

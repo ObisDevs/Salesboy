@@ -3,21 +3,51 @@ import ThemeToggle from './components/ThemeToggle'
 
 export default function Home() {
   return (
-    <div style={{ minHeight: '100vh', padding: '2rem' }}>
-      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '3rem' }}>
-          <div>
-            <h1 style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
+    <div style={{ minHeight: '100vh' }}>
+      {/* Navigation */}
+      <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
               Salesboy AI
             </h1>
-            <p style={{ fontSize: '1.1rem', color: 'var(--text-muted)' }}>
-              WhatsApp Business Automation
-            </p>
+          </Link>
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+            <Link href="/product" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Product</Link>
+            <Link href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Pricing</Link>
+            <Link href="/about" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>About</Link>
+            <ThemeToggle />
+            <Link href="/login">
+              <button className="btn" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>Login</button>
+            </Link>
           </div>
-          <ThemeToggle />
         </div>
+      </nav>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+      {/* Hero Section */}
+      <div style={{ padding: '4rem 2rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', textAlign: 'center' }}>
+          <h1 style={{ fontSize: '3.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-primary)' }}>
+            WhatsApp AI Automation
+          </h1>
+          <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '2rem', maxWidth: '600px', margin: '0 auto 2rem' }}>
+            Transform your Nigerian business with intelligent WhatsApp automation powered by advanced AI and RAG technology
+          </p>
+          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <Link href="/signup">
+              <button className="btn" style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>Get Started</button>
+            </Link>
+            <Link href="/product">
+              <button style={{ fontSize: '1.1rem', padding: '0.75rem 2rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}>Learn More</button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Features Section */}
+      <div style={{ padding: '2rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
           <div className="card">
             <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1rem', fontWeight: '500' }}>SYSTEM STATUS</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
@@ -93,8 +123,9 @@ export default function Home() {
           </Link>
         </div>
 
-        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
-          <p>API Endpoint: /api/webhook/whatsapp</p>
+          <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <p>API Endpoint: /api/webhook/whatsapp</p>
+          </div>
         </div>
       </div>
     </div>

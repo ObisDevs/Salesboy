@@ -215,6 +215,32 @@ export default function SettingsPage() {
           </Button>
         </form>
       </div>
+
+      <div className="card" style={{ marginTop: '1.5rem' }}>
+        <h2 style={{ fontSize: '1.25rem', marginBottom: '1.5rem', fontWeight: '500' }}>Contact Developer</h2>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '1rem' }}>
+          Need help with your Salesboy AI setup? Have questions or feedback?
+        </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <a 
+            href="mailto:obisdev@gmail.com" 
+            style={{ 
+              display: 'flex', 
+              alignItems: 'center', 
+              gap: '0.5rem', 
+              color: 'var(--accent)', 
+              textDecoration: 'none',
+              padding: '0.5rem',
+              borderRadius: '6px',
+              border: '1px solid var(--border)',
+              background: 'var(--bg-secondary)'
+            }}
+          >
+            <span style={{ fontSize: '1.25rem' }}>📧</span>
+            <span style={{ fontWeight: '500' }}>obisdev@gmail.com</span>
+          </a>
+        </div>
+      </div>
     </>
   )
 }

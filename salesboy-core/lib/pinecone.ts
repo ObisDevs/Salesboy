@@ -1,10 +1,10 @@
 import { Pinecone } from '@pinecone-database/pinecone'
 
-const pinecone = new Pinecone({
-  apiKey: process.env.PINECONE_API_KEY!
-})
+const pinecone = process.env.PINECONE_API_KEY ? new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY
+}) : null
 
-const index = pinecone.index(process.env.PINECONE_INDEX_NAME!)
+const index = pinecone && process.env.PINECONE_INDEX_NAME ? pinecone.index(process.env.PINECONE_INDEX_NAME) : null
 
 export interface VectorMetadata {
   user_id: string
@@ -22,6 +22,7 @@ export async function upsertVectors(
     metadata: VectorMetadata
   }>
 ) {
+  if (!index) throw new Error('Pinecone not configured')
   return await index.namespace(`user_${userId}`).upsert(vectors)
 }
 
@@ -30,6 +31,7 @@ export async function queryVectors(
   queryVector: number[],
   topK: number = 5
 ) {
+  if (!index) throw new Error('Pinecone not configured')
   return await index.namespace(`user_${userId}`).query({
     vector: queryVector,
     topK,
@@ -38,9 +40,11 @@ export async function queryVectors(
 }
 
 export async function deleteVectors(userId: string, ids: string[]) {
+  if (!index) throw new Error('Pinecone not configured')
   return await index.namespace(`user_${userId}`).deleteMany(ids)
 }
 
 export async function clearAllVectors(userId: string) {
+  if (!index) throw new Error('Pinecone not configured')
   return await index.namespace(`user_${userId}`).deleteAll()
 }

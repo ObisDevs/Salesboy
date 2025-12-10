@@ -1,10 +1,12 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
+import { useState } from 'react'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 
 export default function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleLogout = async () => {
     const supabase = getSupabaseBrowserClient()
@@ -25,18 +27,74 @@ export default function Sidebar() {
   ]
 
   return (
-    <aside style={{ 
-      width: '240px', 
-      background: 'var(--bg-secondary)', 
-      borderRight: '1px solid var(--border)', 
-      padding: '2rem 1rem',
-      minHeight: '100vh'
-    }}>
-      <div style={{ marginBottom: '2rem' }}>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--accent)' }}>
-          Salesboy AI
-        </h2>
+    <>
+      {/* Mobile Header */}
+      <div style={{ 
+        background: 'var(--bg-secondary)',
+        borderBottom: '1px solid var(--border)',
+        padding: '1rem',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50
+      }} className="block md:hidden">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--accent)' }}>
+              Salesboy AI
+            </h2>
+          </Link>
+          <button
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '1.5rem',
+              cursor: 'pointer',
+              color: 'var(--text-primary)'
+            }}
+          >
+            {mobileMenuOpen ? '✕' : '☰'}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile Menu Overlay */}
+      {mobileMenuOpen && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 40
+          }}
+          className="md:hidden"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside style={{ 
+        width: '240px', 
+        background: 'var(--bg-secondary)', 
+        borderRight: '1px solid var(--border)', 
+        padding: '2rem 1rem',
+        minHeight: '100vh',
+        position: mobileMenuOpen ? 'fixed' : 'static',
+        top: 0,
+        left: mobileMenuOpen ? 0 : '-240px',
+        zIndex: 50,
+        transition: 'left 0.3s ease'
+      }} className={`${mobileMenuOpen ? 'block' : 'hidden'} md:block`}>
+        <div style={{ marginBottom: '2rem' }}>
+          <Link href="/" style={{ textDecoration: 'none' }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--accent)' }}>
+              Salesboy AI
+            </h2>
+          </Link>
+        </div>
       <nav style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         {links.map((link) => {
           const isActive = pathname === link.href
@@ -44,6 +102,7 @@ export default function Sidebar() {
             <Link
               key={link.href}
               href={link.href}
+              onClick={() => setMobileMenuOpen(false)}
               style={{
                 color: isActive ? 'var(--text-primary)' : 'var(--text-muted)',
                 textDecoration: 'none',
@@ -88,5 +147,6 @@ export default function Sidebar() {
         </button>
       </nav>
     </aside>
+    </>
   )
 }

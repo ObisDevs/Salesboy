@@ -87,6 +87,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
     
+    // Check if user has active plan
+    const { data: userPlan } = await supabaseAdmin
+      .from('user_plans')
+      .select('*')
+      .eq('user_id', actualUserId)
+      .single()
+    
+    const hasActivePlan = userPlan && 
+      userPlan.status === 'active' && 
+      new Date(userPlan.expires_at) > new Date()
+    
+    if (!hasActivePlan) {
+      console.log('🚫 User has no active plan:', actualUserId)
+      return NextResponse.json({ message: 'User subscription inactive' })
+    }
+    
     // Check whitelist (numbers IN whitelist are IGNORED)
     const { data: whitelist } = await supabaseAdmin
       .from('whitelists')

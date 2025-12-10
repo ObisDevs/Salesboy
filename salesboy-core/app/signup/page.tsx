@@ -5,6 +5,7 @@ import { Button } from '@/app/components/ui/button'
 import { Input } from '@/app/components/ui/input'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import BackButton from '../components/BackButton'
 
 export default function SignupPage() {
   const [email, setEmail] = useState('')
@@ -24,7 +25,7 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`
+        emailRedirectTo: `${window.location.origin}/payment`
       }
     })
 
@@ -62,7 +63,7 @@ export default function SignupPage() {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/dashboard`
+        redirectTo: `${window.location.origin}/payment`
       }
     })
     if (error) setError(error.message)
@@ -70,9 +71,9 @@ export default function SignupPage() {
 
   if (success) {
     return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="md:p-8">
         <div className="card" style={{ maxWidth: '400px', width: '100%', textAlign: 'center' }}>
-          <h1 style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '1rem' }}>Check your email</h1>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '600', marginBottom: '1rem' }} className="md:text-2xl">Check your email</h1>
           <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>
             We've sent you a confirmation link. Please check your email to verify your account.
           </p>
@@ -85,9 +86,10 @@ export default function SignupPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="md:p-8">
       <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
-        <h1 style={{ fontSize: '2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Sign Up</h1>
+        <BackButton href="/" label="Back to Home" />
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '600', marginBottom: '0.5rem' }} className="md:text-2xl">Sign Up</h1>
         <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Create your Salesboy AI account</p>
 
         {error && (
