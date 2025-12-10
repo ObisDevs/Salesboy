@@ -31,12 +31,27 @@ export default function DashboardLayout({
         return
       }
 
-      // Check payment status
+      // Check payment status with timeout
       try {
-        const res = await fetch('/api/payment/status')
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+        
+        const res = await fetch('/api/payment/status', {
+          signal: controller.signal,
+          credentials: 'include'
+        })
+        clearTimeout(timeoutId)
+        
+        if (!res.ok) {
+          console.error('Payment status check failed with status:', res.status)
+          // On error, allow access but log the issue
+          setLoading(false)
+          return
+        }
+        
         const data = await res.json()
         
-        if (!res.ok || !data.hasActivePlan) {
+        if (!data.hasActivePlan) {
           router.push('/payment')
           return
         }
@@ -44,9 +59,10 @@ export default function DashboardLayout({
         // Start session validation
         SessionManager.startSessionValidation()
         setLoading(false)
-      } catch (error) {
-        console.error('Payment status check failed:', error)
-        router.push('/payment')
+      } catch (error: any) {
+        console.error('Payment status check failed:', error.message)
+        // On timeout or error, allow access to prevent being stuck
+        setLoading(false)
       }
     }
 

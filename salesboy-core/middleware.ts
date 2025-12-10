@@ -22,11 +22,18 @@ export async function middleware(req: NextRequest) {
       }
 
       // Check user plan status
-      const { data: userPlan } = await supabase
+      const { data: userPlan, error: planError } = await supabase
         .from('user_plans')
         .select('*')
         .eq('user_id', user.id)
         .single()
+
+      // If error is not "no rows found", log it but allow access
+      if (planError && planError.code !== 'PGRST116') {
+        console.error('Middleware plan fetch error:', planError)
+        // Allow access on error to prevent infinite loop
+        return NextResponse.next()
+      }
 
       const hasActivePlan = userPlan && 
         userPlan.status === 'active' && 
@@ -38,7 +45,8 @@ export async function middleware(req: NextRequest) {
       }
     } catch (error) {
       console.error('Middleware error:', error)
-      return NextResponse.redirect(new URL('/payment', req.url))
+      // Allow access on error to prevent infinite loop
+      return NextResponse.next()
     }
   }
 
