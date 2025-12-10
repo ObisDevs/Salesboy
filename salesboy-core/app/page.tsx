@@ -29,7 +29,7 @@ export default function Home() {
       </nav>
 
       {/* Retro Text */}
-      <div style={{ padding: '1rem 2rem' }}>
+      <div style={{ padding: '1rem 1rem' }} className="retro-section">
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }} className="hero-grid">
           <div style={{ overflow: 'hidden' }}>
             <div className="retro-text">WHATSAPP SALES<br/>ASSISTANT</div>
@@ -39,27 +39,27 @@ export default function Home() {
       </div>
 
       {/* Hero Section */}
-      <div style={{ padding: '0 2rem', position: 'relative', overflow: 'hidden' }}>
+      <div style={{ padding: '0 1rem', position: 'relative', overflow: 'hidden' }} className="hero-section">
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem', alignItems: 'start' }} className="hero-grid">
-          <div style={{ textAlign: 'left' }}>
-            <h1 style={{ fontSize: '3.5rem', fontWeight: '700', marginBottom: '0.5rem', color: 'var(--text-primary)', lineHeight: '1.1' }}>
+          <div style={{ textAlign: 'left' }} className="hero-content">
+            <h1 className="hero-title">
               Smart Business Automation
             </h1>
-            <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', marginBottom: '1.5rem', lineHeight: '1.4' }}>
+            <p className="hero-description">
               Transform your Nigerian business with intelligent WhatsApp automation powered by advanced AI and RAG technology
             </p>
-            <div style={{ display: 'flex', gap: '1rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }} className="hero-buttons">
               <Link href="/signup">
-                <button className="btn" style={{ fontSize: '1.1rem', padding: '0.75rem 2rem' }}>Get Started</button>
+                <button className="btn hero-btn">Get Started</button>
               </Link>
               <Link href="/product">
-                <button style={{ fontSize: '1.1rem', padding: '0.75rem 2rem', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-primary)' }}>Learn More</button>
+                <button className="hero-btn-secondary">Learn More</button>
               </Link>
             </div>
           </div>
           
           {/* Laptop Chat Simulation */}
-          <div className="laptop-animation" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="laptop-animation" style={{ display: 'none' }}>
             <div className="laptop-container">
               <div className="laptop-screen">
                 <div className="browser-header">

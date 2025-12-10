@@ -200,16 +200,101 @@ body {
   }
 }
 
-/* Hero Grid Responsive */
+/* Hero Page Responsive */
+.hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.hero-description {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  line-height: 1.4;
+}
+
+.hero-btn {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+}
+
+.hero-btn-secondary {
+  font-size: 1rem;
+  padding: 0.75rem 1.5rem;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.hero-btn-secondary:hover {
+  background: var(--bg-secondary);
+}
+
 .hero-grid {
   grid-template-columns: 1fr !important;
   text-align: center !important;
 }
 
+.hero-content {
+  text-align: center !important;
+}
+
+.hero-buttons {
+  justify-content: center;
+}
+
+.retro-section {
+  padding: 0.5rem 1rem !important;
+}
+
+.hero-section {
+  padding: 0 1rem !important;
+}
+
 @media (min-width: 768px) {
+  .hero-title {
+    font-size: 3.5rem;
+  }
+  
+  .hero-description {
+    font-size: 1.25rem;
+  }
+  
+  .hero-btn {
+    font-size: 1.1rem;
+    padding: 0.75rem 2rem;
+  }
+  
+  .hero-btn-secondary {
+    font-size: 1.1rem;
+    padding: 0.75rem 2rem;
+  }
+  
   .hero-grid {
     grid-template-columns: 1fr 1fr !important;
     text-align: left !important;
+  }
+  
+  .hero-content {
+    text-align: left !important;
+  }
+  
+  .hero-buttons {
+    justify-content: flex-start;
+  }
+  
+  .retro-section {
+    padding: 1rem 2rem !important;
+  }
+  
+  .hero-section {
+    padding: 0 2rem !important;
   }
 }
 
@@ -523,46 +608,25 @@ body {
 }
 
 /* Responsive */
+.laptop-animation {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .laptop-animation {
+    display: flex !important;
+    justify-content: center;
+    align-items: center;
+  }
+}
+
 @media (max-width: 767px) {
-  .laptop-screen {
-    width: 350px;
-    height: 240px;
-  }
-  
-  .laptop-base {
-    width: 380px;
-  }
-  
-  .qr-container {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .qr-code {
-    width: 100px;
-    height: 100px;
-  }
-  
-  .qr-corner {
-    width: 20px;
-    height: 20px;
-  }
-  
-  .qr-corner::before {
-    width: 10px;
-    height: 10px;
-  }
-  
-  .phone-scan {
-    font-size: 3rem;
-  }
-  
   .hero-grid {
-    gap: 2rem !important;
+    gap: 1rem !important;
   }
   
   .retro-text {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     text-shadow: 
       1px 1px 0 #2c3e50,
       2px 2px 0 #e74c3c,
@@ -570,5 +634,9 @@ body {
       4px 4px 0 #f39c12,
       5px 5px 0 #27ae60,
       6px 6px 0 #16a085;
+  }
+  
+  .hero-grid {
+    gap: 1rem !important;
   }
 }

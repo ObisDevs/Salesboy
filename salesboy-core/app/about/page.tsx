@@ -3,6 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import ThemeToggle from '../components/ThemeToggle'
 import { useToast } from '../components/ui/toast'
+import { FaBullseye, FaRocket, FaBolt, FaLock, FaDollarSign, FaEnvelope, FaDiscord, FaClock } from 'react-icons/fa'
+import { FaXTwitter } from 'react-icons/fa6'
 
 export default function AboutPage() {
   const [formData, setFormData] = useState({
@@ -74,8 +76,8 @@ export default function AboutPage() {
           {/* Mission & Vision */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem', marginBottom: '4rem' }}>
             <div className="card">
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                🎯 Our Mission
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FaBullseye style={{ color: 'var(--accent)' }} /> Our Mission
               </h3>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 To empower Nigerian small and medium businesses with cutting-edge AI technology that automates customer communications, 
@@ -84,8 +86,8 @@ export default function AboutPage() {
             </div>
 
             <div className="card">
-              <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-                🚀 Our Vision
+              <h3 style={{ fontSize: '1.5rem', fontWeight: '600', marginBottom: '1rem', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <FaRocket style={{ color: 'var(--accent)' }} /> Our Vision
               </h3>
               <p style={{ color: 'var(--text-muted)', lineHeight: '1.6' }}>
                 To become the leading AI automation platform for African businesses, making advanced technology accessible 
@@ -101,22 +103,26 @@ export default function AboutPage() {
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🇳🇬</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center', gap: '0.2rem' }}>
+                  <div style={{ width: '30px', height: '60px', background: '#008751', borderRadius: '4px 0 0 4px' }}></div>
+                  <div style={{ width: '30px', height: '60px', background: '#fff', border: '1px solid #ddd' }}></div>
+                  <div style={{ width: '30px', height: '60px', background: '#008751', borderRadius: '0 4px 4px 0' }}></div>
+                </div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Built for Nigeria</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Designed specifically for Nigerian businesses and market needs</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>⚡</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><FaBolt style={{ color: '#f59e0b' }} /></div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Lightning Fast</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Instant AI responses that keep your customers engaged</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔒</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><FaLock style={{ color: 'var(--accent)' }} /></div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Secure & Private</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Enterprise-grade security with complete data isolation</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>💰</div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><FaDollarSign style={{ color: '#10b981' }} /></div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Affordable</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Transparent pricing that fits any business budget</p>
               </div>
@@ -136,28 +142,28 @@ export default function AboutPage() {
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>📧</span>
+                    <FaEnvelope style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
                     <div>
                       <div style={{ fontWeight: '500' }}>Email</div>
                       <a href="mailto:obisdev@gmail.com" style={{ color: 'var(--accent)', textDecoration: 'none' }}>obisdev@gmail.com</a>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>💬</span>
+                    <FaDiscord style={{ fontSize: '1.5rem', color: '#5865F2' }} />
                     <div>
                       <div style={{ fontWeight: '500' }}>Discord</div>
                       <a href="https://discord.gg/5N7tdxe6" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Join our Discord</a>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🐦</span>
+                    <FaXTwitter style={{ fontSize: '1.5rem', color: 'var(--text-primary)' }} />
                     <div>
                       <div style={{ fontWeight: '500' }}>X (Twitter)</div>
                       <a href="https://x.com/obisdev" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'none' }}>@obisdev</a>
                     </div>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                    <span style={{ fontSize: '1.5rem' }}>🕒</span>
+                    <FaClock style={{ fontSize: '1.5rem', color: 'var(--accent)' }} />
                     <div>
                       <div style={{ fontWeight: '500' }}>Support Hours</div>
                       <div style={{ color: 'var(--text-muted)' }}>Monday - Friday, 9AM - 6PM WAT</div>
