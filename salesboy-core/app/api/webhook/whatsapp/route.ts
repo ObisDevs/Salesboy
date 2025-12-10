@@ -121,9 +121,11 @@ export async function POST(request: NextRequest) {
       const taskPayload = {
         task_type: intent.task_type,
         payload: intent.payload || {},
+        email_content: intent.email_content || '',
         user_id: actualUserId,
         from_number: from,
-        original_message: message
+        original_message: message,
+        conversation_context: conversationContext
       }
 
       // Forward to n8n

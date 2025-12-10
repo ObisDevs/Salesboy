@@ -2,6 +2,7 @@ import { generateEmbedding } from './embeddings'
 import { queryVectors } from './pinecone'
 import { generateResponse } from './llm-client'
 import { supabaseAdmin } from './supabase'
+import { searchProducts } from './product-search'
 
 export interface RAGContext {
   chunks: Array<{
@@ -51,6 +52,15 @@ export async function retrieveContext(
   
   console.log('Bot config in retrieveContext:', { hasConfig: !!botConfig, prompt: botConfig?.system_prompt?.substring(0, 50) })
   
+  // Search for relevant products
+  const products = await searchProducts(userId, query)
+  let productContext = ''
+  if (products.length > 0) {
+    productContext = `\n\nPRODUCT CATALOG:\n${products.map(p => 
+      `- ${p.product_name}: $${p.price} ${p.in_stock ? '(In Stock)' : '(Out of Stock)'}${p.description ? ' - ' + p.description : ''}`
+    ).join('\n')}`
+  }
+  
   // Build enhanced system prompt with business context
   let enhancedPrompt = botConfig?.system_prompt || 'You are a helpful AI assistant.'
   
@@ -58,6 +68,8 @@ export async function retrieveContext(
     const businessContext = `\n\nBUSINESS CONTEXT:\n- You represent: ${botConfig.business_name || 'this business'}\n- Business email: ${botConfig.business_email || 'not provided'}\n- When customers want to contact the business, use this email\n- When sending info TO customers, ask for their email first`
     enhancedPrompt += businessContext
   }
+  
+  enhancedPrompt += productContext
   
   return {
     chunks,

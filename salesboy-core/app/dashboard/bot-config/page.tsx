@@ -9,6 +9,7 @@ export default function BotConfigPage() {
   const [config, setConfig] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingProducts, setUploadingProducts] = useState(false)
   const { showToast } = useToast()
 
   useEffect(() => {
@@ -39,6 +40,33 @@ export default function BotConfigPage() {
       showToast('Failed to save configuration', 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const uploadProductCatalog = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingProducts(true)
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res = await fetch('/api/products/upload', {
+        method: 'POST',
+        body: formData
+      })
+      const result = await res.json()
+      if (!res.ok) {
+        showToast('Upload failed: ' + result.error, 'error')
+        return
+      }
+      showToast(result.message, 'success')
+    } catch (error) {
+      showToast('Upload failed', 'error')
+    } finally {
+      setUploadingProducts(false)
+      e.target.value = ''
     }
   }
 
@@ -131,6 +159,35 @@ export default function BotConfigPage() {
             
             <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
               The AI will use this information to represent your business and handle email notifications properly.
+            </p>
+          </div>
+
+          <div style={{ marginBottom: '1.5rem', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '6px', border: '1px solid var(--border)' }}>
+            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '0.875rem', fontWeight: '600' }}>Product Catalog</h3>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
+              Upload a CSV file with your products so the AI can provide pricing and product information.
+            </p>
+            
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <input
+                id="product-upload"
+                type="file"
+                accept=".csv"
+                style={{ display: 'none' }}
+                onChange={uploadProductCatalog}
+                disabled={uploadingProducts}
+              />
+              <Button 
+                onClick={() => document.getElementById('product-upload')?.click()}
+                disabled={uploadingProducts}
+                style={{ background: 'var(--accent)' }}
+              >
+                {uploadingProducts ? <><LoadingSpinner /> Uploading...</> : 'Upload CSV'}
+              </Button>
+            </div>
+            
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+              CSV format: name, price, description, category, sku, in_stock
             </p>
           </div>
 

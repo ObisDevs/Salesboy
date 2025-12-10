@@ -5,11 +5,12 @@ import { supabaseAdmin } from './supabase'
 const IntentSchema = z.object({
   intent: z.enum(['Response', 'Task', 'Collecting']),
   confidence: z.number().min(0).max(1),
-  task_type: z.enum(['send_email', 'book_meeting', 'place_order', 'human_handoff']).nullable(),
+  task_type: z.enum(['send_email', 'book_meeting', 'place_order', 'create_order', 'human_handoff']).nullable(),
   status: z.enum(['ready', 'collecting', 'cancelled']),
   missing_info: z.array(z.string()),
   payload: z.record(z.any()).nullable(),
   next_question: z.string().nullable(),
+  email_content: z.string().nullable(),
   raw_analysis: z.string()
 })
 
@@ -24,10 +25,11 @@ ANALYZE the conversation and determine:
 
 TASK TYPES & REQUIRED INFO:
 - **send_email**: 
-  - To business: reason, urgency (optional)
-  - To customer: reason, customer_email
+  - To business: reason, urgency (optional), email_content
+  - To customer: reason, customer_email, email_content
 - **book_meeting**: reason, preferred_date, preferred_time (optional)
 - **place_order**: items, quantity, customer_info (optional)
+- **create_order**: items, quantity, price (if available), customer_info
 - **human_handoff**: reason, urgency (optional)
 
 EMAIL LOGIC:
@@ -38,11 +40,12 @@ RETURN JSON:
 {
   "intent": "Response" | "Task" | "Collecting",
   "confidence": 0.0-1.0,
-  "task_type": "send_email" | "book_meeting" | "place_order" | "human_handoff" | null,
+  "task_type": "send_email" | "book_meeting" | "place_order" | "create_order" | "human_handoff" | null,
   "status": "ready" | "collecting" | "cancelled",
   "missing_info": ["field1", "field2"],
   "payload": {"collected_data": "here"},
   "next_question": "What should I ask next?" | null,
+  "email_content": "AI-generated email content based on conversation" | null,
   "raw_analysis": "brief explanation"
 }
 
@@ -139,6 +142,7 @@ Analyze and classify this message in context.`
           missing_info: [],
           payload: null,
           next_question: null,
+          email_content: null,
           raw_analysis: 'Classification failed, using fallback'
         }
       }
@@ -161,6 +165,7 @@ export function getTaskAcknowledgment(taskType: string, payload?: any): string {
     send_email: "✅ Perfect! I've forwarded your request to our team via email. They'll get back to you shortly.",
     book_meeting: "✅ Great! I've submitted your meeting request. You'll receive the meeting details via email soon.",
     place_order: "✅ Excellent! I've processed your order request. You'll get a confirmation with all the details shortly.",
+    create_order: "✅ Perfect! I've created your order. You'll receive confirmation and payment details shortly.",
     human_handoff: "✅ I've notified our team about your request. Someone will reach out to you personally very soon!"
   }
   
