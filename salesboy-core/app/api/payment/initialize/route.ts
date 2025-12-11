@@ -1,18 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClient } from '@/lib/server-auth'
+import { requireAuth } from '@/lib/server-auth'
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createServerClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    const { error: authError, auth } = await requireAuth(request)
+    if (authError) return authError
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
+    const { userId, email } = auth!
     const { plan_type = 'agent_pro' } = await request.json()
 
-    // Initialize Paystack payment
     const paystackResponse = await fetch('https://api.paystack.co/transaction/initialize', {
       method: 'POST',
       headers: {
@@ -20,12 +16,12 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        email: user.email,
-        amount: 2500000, // ₦25,000 in kobo
-        plan: process.env.PAYSTACK_PLAN_CODE, // Monthly plan code
+        email: email,
+        amount: 2500000,
+        plan: process.env.PAYSTACK_PLAN_CODE,
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/callback`,
         metadata: {
-          user_id: user.id,
+          user_id: userId,
           plan_type
         }
       })
