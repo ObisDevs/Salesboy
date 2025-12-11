@@ -5,87 +5,44 @@
       "parameters": {
         "httpMethod": "POST",
         "path": "create_order",
-        "responseMode": "responseNode",
+        "responseMode": "lastNode",
         "options": {}
       },
       "name": "Webhook",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 1,
-      "position": [250, 300]
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "create_order"
     },
     {
       "parameters": {
-        "conditions": {
-          "string": [
-            {
-              "value1": "={{$node[\"Webhook\"].json[\"task_type\"]}}",
-              "value2": "create_order"
-            }
-          ]
-        }
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    customer_name: payloadData.customer_name || 'Unknown',\n    product: payloadData.items || payloadData.product || 'Unknown',\n    quantity: payloadData.quantity || 1,\n    price: payloadData.price || 0,\n    customer_phone: payloadData.customer_phone || payload.from_number,\n    notes: payloadData.notes || '',\n    original_message: payload.original_message,\n    order_date: new Date().toISOString(),\n    status: 'pending'\n  }\n};"
       },
-      "name": "Validate Task Type",
-      "type": "n8n-nodes-base.if",
-      "typeVersion": 1,
+      "name": "Extract Order Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
       "position": [450, 300]
     },
     {
       "parameters": {
-        "functionCode": "// Extract order details\nconst payload = $node[\"Webhook\"].json.payload;\nconst userId = $node[\"Webhook\"].json.user_id;\nconst fromNumber = $node[\"Webhook\"].json.from_number;\nconst originalMessage = $node[\"Webhook\"].json.original_message;\n\nreturn {\n  json: {\n    user_id: userId,\n    from_number: fromNumber,\n    product: payload.product || 'Unknown',\n    quantity: payload.quantity || 1,\n    notes: payload.notes || '',\n    original_message: originalMessage,\n    order_date: new Date().toISOString(),\n    status: 'pending'\n  }\n};"
-      },
-      "name": "Extract Order Data",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [650, 200]
-    },
-    {
-      "parameters": {
-        "functionCode": "// TODO: Add your order creation logic here\n// Examples:\n// - Insert into database\n// - Call your e-commerce API\n// - Send to inventory system\n\nconst orderData = $node[\"Extract Order Data\"].json;\n\n// Simulate order creation\nconst orderId = 'ORD-' + Date.now();\n\nreturn {\n  json: {\n    success: true,\n    order_id: orderId,\n    product: orderData.product,\n    quantity: orderData.quantity,\n    total: orderData.quantity * 100000,\n    message: `Order ${orderId} created successfully for ${orderData.product} (Qty: ${orderData.quantity})`\n  }\n};"
+        "functionCode": "// TODO: Add your order creation logic here\n// Examples:\n// - Insert into Supabase\n// - Call your e-commerce API\n// - Send to inventory system\n\nconst orderData = $input.item.json;\nconst orderId = 'ORD-' + Date.now();\n\nreturn {\n  json: {\n    success: true,\n    order_id: orderId,\n    customer_name: orderData.customer_name,\n    product: orderData.product,\n    quantity: orderData.quantity,\n    total: orderData.quantity * (orderData.price || 100000),\n    message: `Order ${orderId} created for ${orderData.customer_name}. Product: ${orderData.product} (Qty: ${orderData.quantity})`\n  }\n};"
       },
       "name": "Create Order",
-      "type": "n8n-nodes-base.function",
-      "typeVersion": 1,
-      "position": [850, 200]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={{$node[\"Create Order\"].json}}"
-      },
-      "name": "Success Response",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [1050, 200]
-    },
-    {
-      "parameters": {
-        "respondWith": "json",
-        "responseBody": "={\"success\": false, \"error\": \"Invalid task type\"}"
-      },
-      "name": "Error Response",
-      "type": "n8n-nodes-base.respondToWebhook",
-      "typeVersion": 1,
-      "position": [650, 400]
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
     }
   ],
   "connections": {
     "Webhook": {
-      "main": [[{"node": "Validate Task Type", "type": "main", "index": 0}]]
-    },
-    "Validate Task Type": {
-      "main": [
-        [{"node": "Extract Order Data", "type": "main", "index": 0}],
-        [{"node": "Error Response", "type": "main", "index": 0}]
-      ]
+      "main": [[{"node": "Extract Order Data", "type": "main", "index": 0}]]
     },
     "Extract Order Data": {
       "main": [[{"node": "Create Order", "type": "main", "index": 0}]]
-    },
-    "Create Order": {
-      "main": [[{"node": "Success Response", "type": "main", "index": 0}]]
     }
   },
   "active": false,
-  "settings": {},
-  "id": "1"
+  "settings": {
+    "executionOrder": "v1"
+  }
 }

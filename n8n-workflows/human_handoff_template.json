@@ -1,0 +1,48 @@
+{
+  "name": "Salesboy - Human Handoff",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "human_handoff",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "human_handoff"
+    },
+    {
+      "parameters": {
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    customer_name: payloadData.customer_name || 'Unknown',\n    reason: payloadData.reason || 'Customer requested human support',\n    urgency: payloadData.urgency || 'normal',\n    original_message: payload.original_message,\n    conversation_context: payload.conversation_context,\n    created_at: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Extract Handoff Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// TODO: Add notification logic\n// Examples:\n// - Send Slack message to support team\n// - Create ticket in helpdesk system\n// - Send email to support\n\nconst handoffData = $input.item.json;\nconst ticketId = 'TKT-' + Date.now();\n\nreturn {\n  json: {\n    success: true,\n    ticket_id: ticketId,\n    customer_name: handoffData.customer_name,\n    message: `Support ticket ${ticketId} created for ${handoffData.customer_name}. Reason: ${handoffData.reason}`\n  }\n};"
+      },
+      "name": "Notify Support Team",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Extract Handoff Data", "type": "main", "index": 0}]]
+    },
+    "Extract Handoff Data": {
+      "main": [[{"node": "Notify Support Team", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

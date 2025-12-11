@@ -1,0 +1,48 @@
+{
+  "name": "Salesboy - Send Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "send_email",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "send_email"
+    },
+    {
+      "parameters": {
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    customer_name: payloadData.customer_name || 'Unknown',\n    to: payloadData.customer_email || payloadData.business_email || 'admin@example.com',\n    subject: `Message from ${payloadData.customer_name || payload.from_number}`,\n    body: payload.email_content || payload.original_message,\n    reason: payloadData.reason || 'General inquiry',\n    task_type: payload.task_type,\n    user_id: payload.user_id\n  }\n};"
+      },
+      "name": "Extract Email Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// TODO: Replace with actual email sending logic\n// Example: Use Gmail, SendGrid, or SMTP node\n\nconst emailData = $input.item.json;\n\nreturn {\n  json: {\n    success: true,\n    customer_name: emailData.customer_name,\n    message: `Email sent to ${emailData.to} for ${emailData.customer_name}`,\n    email_id: 'EMAIL-' + Date.now()\n  }\n};"
+      },
+      "name": "Send Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Extract Email Data", "type": "main", "index": 0}]]
+    },
+    "Extract Email Data": {
+      "main": [[{"node": "Send Email", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

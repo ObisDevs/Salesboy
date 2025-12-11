@@ -25,12 +25,14 @@ ANALYZE the conversation and determine:
 
 TASK TYPES & REQUIRED INFO:
 - **send_email**: 
-  - To business: reason, urgency (optional), email_content
-  - To customer: reason, customer_email, email_content
-- **book_meeting**: reason, preferred_date, preferred_time (optional)
-- **place_order**: items, quantity, customer_info (optional)
-- **create_order**: items, quantity, price (if available), customer_info
-- **human_handoff**: reason, urgency (optional)
+  - To business: customer_name, reason, urgency (optional), email_content
+  - To customer: customer_name, customer_email, reason, email_content
+- **book_meeting**: customer_name, reason, preferred_date, preferred_time (optional)
+- **place_order**: customer_name, items, quantity, customer_phone (optional)
+- **create_order**: customer_name, items, quantity, price (if available), customer_phone (optional)
+- **human_handoff**: customer_name, reason, urgency (optional)
+
+IMPORTANT: ALWAYS collect customer_name first for ALL task types. Ask "May I have your name?" if not provided.
 
 EMAIL LOGIC:
 - "Email me", "Send to my email" = send TO customer (need customer_email)
@@ -51,11 +53,14 @@ RETURN JSON:
 
 RULES:
 - **Response**: Normal chat, greetings, questions
-- **Collecting**: Customer wants task but missing info - ask for missing fields
+- **Collecting**: Customer wants task but missing info - ask for missing fields ONE AT A TIME
 - **Task**: All required info collected - execute task
 - If customer says "stop", "cancel", "never mind" → status: "cancelled"
+- ALWAYS ask for customer_name FIRST before other details
+- Extract names from conversation (e.g., "I'm John" → customer_name: "John")
 - Be patient and helpful while collecting information
-- Use conversation history to avoid re-asking for info already provided`
+- Use conversation history to avoid re-asking for info already provided
+- Store ALL collected data in payload as key-value pairs (not empty objects)`
 
 export async function classifyIntent(
   userId: string,
@@ -161,13 +166,5 @@ function extractJSON(text: string): string {
 }
 
 export function getTaskAcknowledgment(taskType: string, payload?: any): string {
-  const acknowledgments: Record<string, string> = {
-    send_email: "✅ Perfect! I've forwarded your request to our team via email. They'll get back to you shortly.",
-    book_meeting: "✅ Great! I've submitted your meeting request. You'll receive the meeting details via email soon.",
-    place_order: "✅ Excellent! I've processed your order request. You'll get a confirmation with all the details shortly.",
-    create_order: "✅ Perfect! I've created your order. You'll receive confirmation and payment details shortly.",
-    human_handoff: "✅ I've notified our team about your request. Someone will reach out to you personally very soon!"
-  }
-  
-  return acknowledgments[taskType] || "✅ I'm processing that for you now. You'll hear back from us shortly!"
+  return ''
 }

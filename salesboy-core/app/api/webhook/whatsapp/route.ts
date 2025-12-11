@@ -125,19 +125,21 @@ export async function POST(request: NextRequest) {
       direction: 'incoming'
     })
     
-    // Get conversation history
+    // Get conversation history (increased to 20 messages)
     const { data: chatHistory } = await supabaseAdmin
       .from('chat_logs')
       .select('message_body, direction')
       .eq('user_id', actualUserId)
       .eq('from_number', from)
       .order('timestamp', { ascending: false })
-      .limit(10)
+      .limit(20)
     
-    // Build conversation context
-    const conversationContext = chatHistory?.slice(0, 5).reverse().map((msg: any) => 
+    // Build conversation context (use last 10 messages)
+    const conversationContext = chatHistory?.slice(0, 10).reverse().map((msg: any) => 
       `${msg.direction === 'incoming' ? 'Customer' : 'Assistant'}: ${msg.message_body}`
     ).join('\n') || ''
+    
+    console.log('💬 Conversation history:', chatHistory?.length || 0, 'messages loaded')
     
     console.log('🧠 Classifying intent with full context...')
     let intent
@@ -165,15 +167,22 @@ export async function POST(request: NextRequest) {
       // Execute task - forward to webhooks
       console.log('🔄 Executing task:', intent.task_type)
 
+      // Ensure payload has data, not empty object
+      const cleanPayload = intent.payload && Object.keys(intent.payload).length > 0 
+        ? intent.payload 
+        : { raw_message: message }
+
       const taskPayload = {
         task_type: intent.task_type,
-        payload: intent.payload || {},
+        payload: cleanPayload,
         email_content: intent.email_content || '',
         user_id: actualUserId,
         from_number: from,
         original_message: message,
         conversation_context: conversationContext
       }
+
+      console.log('📦 Task payload:', JSON.stringify(taskPayload, null, 2))
 
       // Forward to n8n
       try {
@@ -207,7 +216,22 @@ export async function POST(request: NextRequest) {
         console.error('❌ Failed to forward task to user webhook:', error)
       }
 
-      responseMessage = getTaskAcknowledgment(intent.task_type, intent.payload)
+      // Generate AI confirmation with task details
+      console.log('🤖 Generating AI task confirmation...')
+      try {
+        const confirmationPrompt = `The customer's ${intent.task_type.replace('_', ' ')} has been successfully submitted. Details: ${JSON.stringify(cleanPayload)}. Write a brief, friendly confirmation message (2-3 sentences) that:
+1. Confirms the action was completed
+2. Summarizes key details (name, items, date, etc.)
+3. Sets expectations for next steps
+
+Be natural and conversational. Don't use generic templates.`
+        
+        const aiConfirmation = await processMessage(actualUserId, confirmationPrompt, conversationContext)
+        responseMessage = aiConfirmation
+      } catch (error) {
+        console.error('❌ AI confirmation failed:', error)
+        responseMessage = `Done! I've processed your ${intent.task_type.replace('_', ' ')} request. You'll hear back from us soon.`
+      }
 
     } else if (intent.intent === 'Collecting' && intent.next_question) {
       // Still collecting info - ask next question

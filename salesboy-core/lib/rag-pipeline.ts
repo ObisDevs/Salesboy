@@ -50,26 +50,34 @@ export async function retrieveContext(
     console.log('Top chunk preview:', chunks[0].text.substring(0, 100))
   }
   
-  console.log('Bot config in retrieveContext:', { hasConfig: !!botConfig, prompt: botConfig?.system_prompt?.substring(0, 50) })
+  // ALWAYS fetch ALL products for sales context
+  const { data: allProducts } = await supabaseAdmin
+    .from('product_catalog')
+    .select('*')
+    .eq('user_id', userId)
+    .order('product_name', { ascending: true })
   
-  // Search for relevant products
-  const products = await searchProducts(userId, query)
   let productContext = ''
-  if (products.length > 0) {
-    productContext = `\n\nPRODUCT CATALOG:\n${products.map(p => 
-      `- ${p.product_name}: $${p.price} ${p.in_stock ? '(In Stock)' : '(Out of Stock)'}${p.description ? ' - ' + p.description : ''}`
-    ).join('\n')}`
+  if (allProducts && allProducts.length > 0) {
+    productContext = `\n\nAVAILABLE PRODUCTS (You MUST use this to answer product questions):\n${allProducts.map((p: any) => 
+      `- ${p.product_name}: ₦${p.price.toLocaleString()} ${p.in_stock ? '✅ In Stock' : '❌ Out of Stock'}${p.category ? ` [${p.category}]` : ''}${p.description ? ` - ${p.description}` : ''}`
+    ).join('\n')}\n\nIMPORTANT: Proactively recommend products based on customer needs. Act as a sales agent.`
   }
   
   // Build enhanced system prompt with business context
-  let enhancedPrompt = botConfig?.system_prompt || 'You are a helpful AI assistant.'
+  let enhancedPrompt = botConfig?.system_prompt || 'You are a professional sales agent.'
+  
+  // Add sales agent behavior
+  enhancedPrompt += `\n\nYOU ARE A SALES AGENT:\n- Proactively recommend products from the catalog\n- Know ALL product prices, availability, and details\n- Suggest alternatives when products are out of stock\n- Upsell and cross-sell when appropriate\n- Be helpful, friendly, and persuasive`
   
   if (botConfig?.business_name || botConfig?.business_email) {
-    const businessContext = `\n\nBUSINESS CONTEXT:\n- You represent: ${botConfig.business_name || 'this business'}\n- Business email: ${botConfig.business_email || 'not provided'}\n- When customers want to contact the business, use this email\n- When sending info TO customers, ask for their email first`
+    const businessContext = `\n\nBUSINESS CONTEXT:\n- You represent: ${botConfig.business_name || 'this business'}\n- Business email: ${botConfig.business_email || 'not provided'}`
     enhancedPrompt += businessContext
   }
   
   enhancedPrompt += productContext
+  
+  console.log('📊 Products loaded:', allProducts?.length || 0)
   
   return {
     chunks,
