@@ -20,9 +20,11 @@ export async function POST(request: NextRequest) {
         amount: 2500000,
         plan: process.env.PAYSTACK_PLAN_CODE,
         callback_url: `${process.env.NEXT_PUBLIC_APP_URL}/payment/callback`,
+        cancel_action: `${process.env.NEXT_PUBLIC_APP_URL}/payment?cancelled=true`,
         metadata: {
           user_id: userId,
-          plan_type
+          plan_type,
+          cancel_action: `${process.env.NEXT_PUBLIC_APP_URL}/payment?cancelled=true`
         }
       })
     })

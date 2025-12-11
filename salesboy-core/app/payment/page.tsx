@@ -1,15 +1,24 @@
 'use client'
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { LoadingSpinner } from '../components/ui/loading'
 import { useToast } from '../components/ui/toast'
 import BackButton from '../components/BackButton'
 
-export default function PaymentPage() {
+function PaymentContent() {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { showToast } = useToast()
+
+  useEffect(() => {
+    const cancelled = searchParams.get('cancelled')
+    if (cancelled === 'true') {
+      showToast('Payment was cancelled. You can try again when ready.', 'error')
+      router.replace('/payment')
+    }
+  }, [searchParams, router, showToast])
 
   const handlePayment = async () => {
     setLoading(true)
@@ -26,7 +35,6 @@ export default function PaymentPage() {
         throw new Error(data.error || 'Payment initialization failed')
       }
 
-      // Redirect to Paystack
       window.location.href = data.authorization_url
     } catch (error: any) {
       showToast(error.message || 'Payment failed', 'error')
@@ -49,7 +57,6 @@ export default function PaymentPage() {
           </p>
         </div>
 
-        {/* Plan Details */}
         <div style={{ 
           border: '2px solid var(--accent)', 
           borderRadius: '12px', 
@@ -94,7 +101,6 @@ export default function PaymentPage() {
           </div>
         </div>
 
-        {/* Payment Button */}
         <button 
           onClick={handlePayment}
           disabled={loading}
@@ -139,5 +145,13 @@ export default function PaymentPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingSpinner /></div>}>
+      <PaymentContent />
+    </Suspense>
   )
 }
