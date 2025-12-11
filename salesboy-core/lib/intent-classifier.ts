@@ -3,64 +3,107 @@ import { generateResponse } from './llm-client'
 import { supabaseAdmin } from './supabase'
 
 const IntentSchema = z.object({
-  intent: z.enum(['Response', 'Task', 'Collecting']),
+  intent: z.enum(['Response', 'Task', 'Collecting', 'Inquiry']),
   confidence: z.number().min(0).max(1),
-  task_type: z.enum(['send_email', 'book_meeting', 'place_order', 'create_order', 'human_handoff']).nullable(),
+  task_type: z.enum(['inquiry', 'send_email', 'book_meeting', 'place_order', 'create_order', 'human_handoff']).nullable(),
   status: z.enum(['ready', 'collecting', 'cancelled']),
   missing_info: z.array(z.string()),
   payload: z.record(z.any()).nullable(),
   next_question: z.string().nullable(),
   email_content: z.string().nullable(),
-  raw_analysis: z.string()
+  raw_analysis: z.string(),
+  notify_owner: z.boolean().default(true),
+  show_customer_notification: z.boolean().default(false)
 })
 
 export type IntentResult = z.infer<typeof IntentSchema>
 
-const INTENT_SYSTEM_PROMPT = `You are an intelligent intent classifier that can track multi-message conversations to complete tasks.
+const INTENT_SYSTEM_PROMPT = `You are an intelligent intent classifier that tracks conversations and notifies business owners.
 
 ANALYZE the conversation and determine:
 1. What the customer wants (intent)
-2. What information is still needed
-3. Whether to execute the task or keep collecting
+2. Whether to notify the business owner
+3. Whether to show "team notified" message to customer
+
+INTENT TYPES:
+- **Inquiry**: Customer asking about products, prices, availability (NO fields required)
+- **Task**: Customer wants to book, order, or request something (fields required)
+- **Collecting**: Gathering required info for a task
+- **Response**: Normal chat, greetings
 
 TASK TYPES & REQUIRED INFO:
-- **send_email**: 
-  - To business: customer_name, reason, urgency (optional), email_content
-  - To customer: customer_name, customer_email, reason, email_content
-- **book_meeting**: customer_name, reason, preferred_date, preferred_time (optional)
-- **place_order**: customer_name, items, quantity, customer_phone (optional)
-- **create_order**: customer_name, items, quantity, price (if available), customer_phone (optional)
-- **human_handoff**: customer_name, reason, urgency (optional)
+- **inquiry**: Customer asking questions (NO fields required, notify_owner: true, show_customer_notification: false)
+  Examples: "How much is X?", "Is X available?", "What colors?"
+  
+- **book_meeting**: customer_name (REQUIRED), customer_email (REQUIRED), reason, preferred_date, preferred_time (optional)
+  notify_owner: true, show_customer_notification: true
+  
+- **place_order**: customer_name (REQUIRED), customer_email (REQUIRED), items, quantity, delivery_address (REQUIRED)
+  notify_owner: true, show_customer_notification: true
+  
+- **create_order**: customer_name (REQUIRED), customer_email (REQUIRED), items, quantity, price, delivery_address (REQUIRED)
+  notify_owner: true, show_customer_notification: true
+  
+- **send_email**: customer_name (REQUIRED), customer_email (REQUIRED), reason, email_content
+  notify_owner: true, show_customer_notification: true
+  
+- **human_handoff**: customer_name (REQUIRED), customer_email (REQUIRED), reason, urgency (optional)
+  notify_owner: true, show_customer_notification: true
 
-IMPORTANT: ALWAYS collect customer_name first for ALL task types. Ask "May I have your name?" if not provided.
+CRITICAL RULES:
+1. NEVER mark task as "ready" if customer_name is "Not provided" or missing
+2. NEVER mark task as "ready" if customer_email is "Not provided" or missing
+3. For orders: NEVER mark as "ready" if delivery_address is missing
+4. ALWAYS ask for missing info explicitly
+5. Extract info from conversation history if already provided
+6. Do NOT use placeholders - keep status as "collecting" until real data is provided
 
-EMAIL LOGIC:
-- "Email me", "Send to my email" = send TO customer (need customer_email)
-- "Email your team", "Notify via email" = send TO business (no email needed)
+NOTIFICATION LOGIC:
+- **Inquiry** (notify_owner: true, show_customer_notification: false)
+  Customer gets answer, owner gets notified silently
+  
+- **Task** (notify_owner: true, show_customer_notification: true)
+  Customer sees "team notified", owner gets full details
 
 RETURN JSON:
 {
-  "intent": "Response" | "Task" | "Collecting",
+  "intent": "Response" | "Task" | "Collecting" | "Inquiry",
   "confidence": 0.0-1.0,
-  "task_type": "send_email" | "book_meeting" | "place_order" | "create_order" | "human_handoff" | null,
+  "task_type": "inquiry" | "send_email" | "book_meeting" | "place_order" | "create_order" | "human_handoff" | null,
   "status": "ready" | "collecting" | "cancelled",
   "missing_info": ["field1", "field2"],
-  "payload": {"collected_data": "here"},
+  "payload": {"collected_data": "here", "inquiry_question": "what they asked"},
   "next_question": "What should I ask next?" | null,
-  "email_content": "AI-generated email content based on conversation" | null,
-  "raw_analysis": "brief explanation"
+  "email_content": "AI-generated email content" | null,
+  "raw_analysis": "brief explanation",
+  "notify_owner": true (always true for Inquiry and Task),
+  "show_customer_notification": false (false for Inquiry, true for Task)
 }
 
-RULES:
-- **Response**: Normal chat, greetings, questions
-- **Collecting**: Customer wants task but missing info - ask for missing fields ONE AT A TIME
-- **Task**: All required info collected - execute task
-- If customer says "stop", "cancel", "never mind" → status: "cancelled"
-- ALWAYS ask for customer_name FIRST before other details
-- Extract names from conversation (e.g., "I'm John" → customer_name: "John")
-- Be patient and helpful while collecting information
-- Use conversation history to avoid re-asking for info already provided
-- Store ALL collected data in payload as key-value pairs (not empty objects)`
+VALIDATION RULES:
+- **Response**: Normal chat, greetings (notify_owner: false, show_customer_notification: false)
+- **Inquiry**: Questions about products/prices (notify_owner: true, show_customer_notification: false)
+- **Collecting**: Missing required info (notify_owner: false, show_customer_notification: false)
+- **Task**: All required fields collected (notify_owner: true, show_customer_notification: true)
+
+COLLECTION ORDER:
+1. customer_name (FIRST - always required for tasks)
+2. customer_email (SECOND - always required for tasks)
+3. delivery_address (THIRD - only for orders)
+4. Other task-specific fields
+
+EXTRACTION:
+- Extract from conversation: "I'm John" → customer_name: "John"
+- Extract email: "john@example.com" → customer_email: "john@example.com"
+- Extract address: "123 Main St, Lagos" → delivery_address: "123 Main St, Lagos"
+- Use conversation history to avoid re-asking
+- Store ALL collected data in payload as key-value pairs
+
+NEVER PROCEED TO "ready" STATUS WITH:
+- customer_name: "Not provided"
+- customer_email: "Not provided"
+- delivery_address: "Not provided" (for orders)
+- Empty or missing required fields`
 
 export async function classifyIntent(
   userId: string,
@@ -68,7 +111,6 @@ export async function classifyIntent(
   message: string,
   conversationHistory: string
 ): Promise<IntentResult> {
-  // Get any active intent session
   const { data: activeIntent } = await supabaseAdmin
     .from('intent_sessions')
     .select('*')
@@ -77,7 +119,6 @@ export async function classifyIntent(
     .eq('status', 'collecting')
     .single()
 
-  // Get business context
   const { data: botConfig } = await supabaseAdmin
     .from('bot_config')
     .select('business_name, business_email')
@@ -104,10 +145,8 @@ Analyze and classify this message in context.`
       const jsonStr = extractJSON(response.content)
       const parsed = JSON.parse(jsonStr)
       
-      // Validate with Zod
       const result = IntentSchema.parse(parsed)
       
-      // Save/update intent session if collecting or ready
       if (result.intent === 'Collecting' || (result.intent === 'Task' && result.status === 'ready')) {
         await supabaseAdmin
           .from('intent_sessions')
@@ -124,7 +163,6 @@ Analyze and classify this message in context.`
           })
       }
       
-      // Clear session if cancelled or completed
       if (result.status === 'cancelled' || result.status === 'ready') {
         await supabaseAdmin
           .from('intent_sessions')
@@ -148,7 +186,9 @@ Analyze and classify this message in context.`
           payload: null,
           next_question: null,
           email_content: null,
-          raw_analysis: 'Classification failed, using fallback'
+          raw_analysis: 'Classification failed, using fallback',
+          notify_owner: false,
+          show_customer_notification: false
         }
       }
     }

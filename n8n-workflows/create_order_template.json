@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    customer_name: payloadData.customer_name || 'Unknown',\n    product: payloadData.items || payloadData.product || 'Unknown',\n    quantity: payloadData.quantity || 1,\n    price: payloadData.price || 0,\n    customer_phone: payloadData.customer_phone || payload.from_number,\n    notes: payloadData.notes || '',\n    original_message: payload.original_message,\n    order_date: new Date().toISOString(),\n    status: 'pending'\n  }\n};"
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    customer_name: payloadData.customer_name,\n    customer_email: payloadData.customer_email,\n    delivery_address: payloadData.delivery_address,\n    product: payloadData.items || payloadData.product || 'Unknown',\n    quantity: payloadData.quantity || 1,\n    price: payloadData.price || 0,\n    notes: payloadData.notes || '',\n    original_message: payload.original_message,\n    order_date: new Date().toISOString(),\n    status: 'pending'\n  }\n};"
       },
       "name": "Extract Order Data",
       "type": "n8n-nodes-base.code",

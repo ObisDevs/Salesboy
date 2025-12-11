@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    customer_name: payloadData.customer_name || 'Unknown',\n    reason: payloadData.reason || 'Meeting request',\n    preferred_date: payloadData.preferred_date || 'Not specified',\n    preferred_time: payloadData.preferred_time || 'Not specified',\n    original_message: payload.original_message,\n    created_at: new Date().toISOString()\n  }\n};"
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    customer_name: payloadData.customer_name,\n    customer_email: payloadData.customer_email,\n    reason: payloadData.reason || 'Meeting request',\n    preferred_date: payloadData.preferred_date || 'Not specified',\n    preferred_time: payloadData.preferred_time || 'Not specified',\n    original_message: payload.original_message,\n    created_at: new Date().toISOString()\n  }\n};"
       },
       "name": "Extract Meeting Data",
       "type": "n8n-nodes-base.code",

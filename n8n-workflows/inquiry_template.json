@@ -1,0 +1,48 @@
+{
+  "name": "Salesboy - Customer Inquiry (Silent Notification)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "inquiry",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [250, 300],
+      "webhookId": "inquiry"
+    },
+    {
+      "parameters": {
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    user_id: payload.user_id,\n    from_number: payload.from_number,\n    inquiry_question: payloadData.inquiry_question || payload.original_message,\n    ai_response: payload.ai_response || 'No response',\n    conversation_context: payload.conversation_context,\n    timestamp: new Date().toISOString()\n  }\n};"
+      },
+      "name": "Extract Inquiry Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [450, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "// TODO: Add notification logic\n// Examples:\n// - Send Slack message to sales team\n// - Log to CRM\n// - Send email digest\n// - Track in analytics\n\nconst inquiryData = $input.item.json;\n\nreturn {\n  json: {\n    success: true,\n    message: `Inquiry logged: ${inquiryData.inquiry_question}`,\n    inquiry_data: inquiryData\n  }\n};"
+      },
+      "name": "Log Inquiry",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [650, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": {
+      "main": [[{"node": "Extract Inquiry Data", "type": "main", "index": 0}]]
+    },
+    "Extract Inquiry Data": {
+      "main": [[{"node": "Log Inquiry", "type": "main", "index": 0}]]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

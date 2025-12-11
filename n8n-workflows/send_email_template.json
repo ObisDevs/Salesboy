@@ -16,7 +16,7 @@
     },
     {
       "parameters": {
-        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    customer_name: payloadData.customer_name || 'Unknown',\n    to: payloadData.customer_email || payloadData.business_email || 'admin@example.com',\n    subject: `Message from ${payloadData.customer_name || payload.from_number}`,\n    body: payload.email_content || payload.original_message,\n    reason: payloadData.reason || 'General inquiry',\n    task_type: payload.task_type,\n    user_id: payload.user_id\n  }\n};"
+        "functionCode": "const payload = $input.item.json;\nconst payloadData = payload.payload || {};\n\nreturn {\n  json: {\n    customer_name: payloadData.customer_name,\n    customer_email: payloadData.customer_email,\n    to: payloadData.customer_email || 'admin@example.com',\n    subject: `Message from ${payloadData.customer_name || 'Customer'}`,\n    body: payload.email_content || payload.original_message,\n    reason: payloadData.reason || 'General inquiry',\n    task_type: payload.task_type,\n    user_id: payload.user_id,\n    from_number: payload.from_number\n  }\n};"
       },
       "name": "Extract Email Data",
       "type": "n8n-nodes-base.code",
