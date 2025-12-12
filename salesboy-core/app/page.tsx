@@ -6,20 +6,17 @@ export default function Home() {
     <div style={{ minHeight: '100vh' }}>
       {/* Navigation */}
       <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
               Salesboy AI
             </h1>
           </Link>
           
-          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }} className="nav-links">
             <Link href="/product" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Product</Link>
             <Link href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Pricing</Link>
             <Link href="/about" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>About</Link>
-          </div>
-          
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <ThemeToggle />
             <Link href="/login">
               <button className="btn" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>Login</button>
@@ -27,6 +24,14 @@ export default function Home() {
           </div>
         </div>
       </nav>
+      <style jsx>{`
+        @media (max-width: 640px) {
+          .nav-links {
+            gap: 0.5rem !important;
+            font-size: 0.875rem;
+          }
+        }
+      `}</style>
 
       {/* Retro Text */}
       <div style={{ padding: '1rem 1rem' }} className="retro-section">

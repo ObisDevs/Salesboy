@@ -43,13 +43,13 @@ export default function AboutPage() {
     <div style={{ minHeight: '100vh' }}>
       {/* Navigation */}
       <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
               Salesboy AI
             </h1>
           </Link>
-          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }} className="nav-links">
             <Link href="/product" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Product</Link>
             <Link href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Pricing</Link>
             <Link href="/about" style={{ textDecoration: 'none', color: 'var(--accent)', fontWeight: '500' }}>About</Link>
@@ -60,6 +60,14 @@ export default function AboutPage() {
           </div>
         </div>
       </nav>
+      <style jsx>{`
+        @media (max-width: 640px) {
+          .nav-links {
+            gap: 0.5rem !important;
+            font-size: 0.875rem;
+          }
+        }
+      `}</style>
 
       <div style={{ padding: '4rem 2rem' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
@@ -112,17 +120,17 @@ export default function AboutPage() {
                 <p style={{ color: 'var(--text-muted)' }}>Designed specifically for Nigerian businesses and market needs</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><FaBolt style={{ color: '#f59e0b' }} /></div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><FaBolt style={{ color: '#f59e0b' }} /></div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Lightning Fast</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Instant AI responses that keep your customers engaged</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><FaLock style={{ color: 'var(--accent)' }} /></div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><FaLock style={{ color: 'var(--accent)' }} /></div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Secure & Private</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Enterprise-grade security with complete data isolation</p>
               </div>
               <div style={{ textAlign: 'center' }}>
-                <div style={{ fontSize: '3rem', marginBottom: '1rem' }}><FaDollarSign style={{ color: '#10b981' }} /></div>
+                <div style={{ fontSize: '3rem', marginBottom: '1rem', display: 'flex', justifyContent: 'center' }}><FaDollarSign style={{ color: '#10b981' }} /></div>
                 <h3 style={{ fontSize: '1.2rem', fontWeight: '600', marginBottom: '0.5rem' }}>Affordable</h3>
                 <p style={{ color: 'var(--text-muted)' }}>Transparent pricing that fits any business budget</p>
               </div>
