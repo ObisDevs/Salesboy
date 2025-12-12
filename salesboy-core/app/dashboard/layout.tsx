@@ -85,7 +85,7 @@ export default function DashboardLayout({
 
   return (
     <ToastProvider>
-      <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'row' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', flexDirection: 'row', position: 'relative' }}>
         <Sidebar />
         <main style={{ 
           flex: 1, 
@@ -102,7 +102,7 @@ export default function DashboardLayout({
         @media (max-width: 767px) {
           .dashboard-main {
             padding: 1rem !important;
-            margin-top: 60px;
+            margin-top: 50px;
           }
         }
       `}</style>

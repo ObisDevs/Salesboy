@@ -1,28 +1,50 @@
+'use client'
 import Link from 'next/link'
 import ThemeToggle from './components/ThemeToggle'
+import { useState } from 'react'
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   return (
     <div style={{ minHeight: '100vh' }}>
       {/* Navigation */}
       <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="nav-container">
           <Link href="/" style={{ textDecoration: 'none' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
               Salesboy AI
             </h1>
           </Link>
           
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }} className="nav-links">
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }} className="nav-center">
             <Link href="/product" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Product</Link>
             <Link href="/pricing" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Pricing</Link>
             <Link href="/about" style={{ textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>About</Link>
+          </div>
+          
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }} className="nav-right">
             <ThemeToggle />
             <Link href="/login">
               <button className="btn" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>Login</button>
             </Link>
           </div>
+
+          <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="mobile-menu-btn" style={{ display: 'none', background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-primary)' }}>☰</button>
         </div>
+
+        {mobileMenuOpen && (
+          <div className="mobile-nav-menu" style={{ padding: '1rem', borderTop: '1px solid var(--border)', display: 'none' }}>
+            <Link href="/product" onClick={() => setMobileMenuOpen(false)} style={{ display: 'block', padding: '0.75rem', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Product</Link>
+            <Link href="/pricing" onClick={() => setMobileMenuOpen(false)} style={{ display: 'block', padding: '0.75rem', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>Pricing</Link>
+            <Link href="/about" onClick={() => setMobileMenuOpen(false)} style={{ display: 'block', padding: '0.75rem', textDecoration: 'none', color: 'var(--text-primary)', fontWeight: '500' }}>About</Link>
+            <div style={{ display: 'flex', gap: '1rem', padding: '0.75rem', alignItems: 'center' }}>
+              <ThemeToggle />
+              <Link href="/login">
+                <button className="btn" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>Login</button>
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Retro Text */}

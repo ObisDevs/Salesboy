@@ -99,9 +99,17 @@ body {
     font-size: 0.875rem;
   }
   
-  .nav-links {
-    gap: 0.5rem !important;
-    font-size: 0.875rem;
+  .nav-center,
+  .nav-right {
+    display: none !important;
+  }
+  
+  .mobile-menu-btn {
+    display: block !important;
+  }
+  
+  .mobile-nav-menu {
+    display: block !important;
   }
   
   /* Hide desktop sidebar on mobile */
@@ -116,14 +124,17 @@ body {
 }
 
 @media (min-width: 769px) {
-  /* Show desktop sidebar */
   .sidebar-desktop {
     display: block;
   }
   
-  /* Hide mobile menu */
   .sidebar-mobile {
     display: none;
+  }
+  
+  .mobile-menu-btn,
+  .mobile-nav-menu {
+    display: none !important;
   }
 }
 

@@ -32,28 +32,27 @@ export default function Sidebar() {
       <div style={{ 
         background: 'var(--bg-secondary)',
         borderBottom: '1px solid var(--border)',
-        padding: '1rem',
-        display: 'none'
+        padding: '0.75rem 1rem',
+        display: 'none',
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 30
       }} className="mobile-header">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--accent)' }}>
-              Salesboy AI
-            </h2>
-          </Link>
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '1.5rem',
-              cursor: 'pointer',
-              color: 'var(--text-primary)'
-            }}
-          >
-            {mobileMenuOpen ? '✕' : '☰'}
-          </button>
-        </div>
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          style={{
+            background: 'none',
+            border: 'none',
+            fontSize: '1.25rem',
+            cursor: 'pointer',
+            color: 'var(--text-primary)',
+            padding: '0.25rem'
+          }}
+        >
+          ☰
+        </button>
       </div>
 
       {/* Mobile Overlay */}
@@ -145,22 +144,22 @@ export default function Sidebar() {
 
       {/* Mobile Sidebar */}
       <aside style={{ 
-        width: '240px', 
+        width: '200px', 
         background: 'var(--bg-secondary)', 
         borderRight: '1px solid var(--border)', 
-        padding: '2rem 1rem',
+        padding: '1rem 0.75rem',
         minHeight: '100vh',
         position: 'fixed',
         top: 0,
-        left: mobileMenuOpen ? 0 : '-240px',
+        left: mobileMenuOpen ? 0 : '-200px',
         zIndex: 50,
         transition: 'left 0.3s ease',
         overflowY: 'auto',
         display: 'none'
       }} className="mobile-sidebar">
-        <div style={{ marginBottom: '2rem' }}>
+        <div style={{ marginBottom: '1.5rem' }}>
           <Link href="/" style={{ textDecoration: 'none' }}>
-            <h2 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--accent)' }}>
+            <h2 style={{ fontSize: '1.1rem', fontWeight: '600', color: 'var(--accent)' }}>
               Salesboy AI
             </h2>
           </Link>
