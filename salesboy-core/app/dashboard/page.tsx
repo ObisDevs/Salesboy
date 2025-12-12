@@ -135,7 +135,7 @@ export default function Dashboard() {
   return (
     <ErrorBoundary>
       <DashboardHeader 
-        title={`Welcome, ${profile?.full_name || 'User'}`}
+        title={`Welcome to Sales-up`}
         description="System Overview" 
       />
 

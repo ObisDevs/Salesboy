@@ -44,9 +44,10 @@ export default function AboutPage() {
       {/* Navigation */}
       <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <img src="/favicon.svg" alt="Logo" style={{ width: '32px', height: '32px' }} />
             <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-              Salesboy AI
+              Sales-up
             </h1>
           </Link>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }} className="nav-links">
@@ -74,7 +75,7 @@ export default function AboutPage() {
           {/* About Section */}
           <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
             <h1 style={{ fontSize: '3rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-              About Salesboy AI
+              About Sales-up
             </h1>
             <p style={{ fontSize: '1.25rem', color: 'var(--text-muted)', maxWidth: '800px', margin: '0 auto' }}>
               We're revolutionizing how Nigerian businesses communicate with their customers through intelligent WhatsApp automation
@@ -107,7 +108,7 @@ export default function AboutPage() {
           {/* Why Choose Us */}
           <div style={{ marginBottom: '4rem' }}>
             <h2 style={{ fontSize: '2.5rem', fontWeight: '600', marginBottom: '2rem', textAlign: 'center', color: 'var(--text-primary)' }}>
-              Why Choose Salesboy AI?
+              Why Choose Sales-up?
             </h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '2rem' }}>
               <div style={{ textAlign: 'center' }}>

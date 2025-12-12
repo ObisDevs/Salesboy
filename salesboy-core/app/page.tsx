@@ -10,9 +10,10 @@ export default function Home() {
       {/* Navigation */}
       <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="nav-container">
-          <Link href="/" style={{ textDecoration: 'none' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <img src="/favicon.svg" alt="Logo" style={{ width: '32px', height: '32px' }} />
             <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-              Salesboy AI
+              Sales-up
             </h1>
           </Link>
           
@@ -51,7 +52,7 @@ export default function Home() {
       <div style={{ padding: '1rem 1rem' }} className="retro-section">
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }} className="hero-grid">
           <div style={{ overflow: 'hidden' }}>
-            <div className="retro-text">WHATSAPP SALES<br/>ASSISTANT</div>
+            <div className="retro-text">10x Sales with<br/>WHATSAPP SALES-UP<br/>AI ASSISTANT</div>
           </div>
           <div></div>
         </div>
@@ -92,13 +93,8 @@ export default function Home() {
                 {/* QR Code Scanning Phase */}
                 <div className="qr-scan-phase">
                   <div className="qr-container">
-                    <div className="qr-code">
-                      <div className="qr-corner qr-tl"></div>
-                      <div className="qr-corner qr-tr"></div>
-                      <div className="qr-corner qr-bl"></div>
-                      <div className="qr-pattern"></div>
-                    </div>
-                    <div className="phone-scan">📱</div>
+                    <img src="/qrcode.png" alt="QR Code" className="qr-code-image" style={{ width: '150px', height: '150px', borderRadius: '4px' }} />
+                    <div className="phone-scan" style={{ fontSize: '5rem' }}>📱</div>
                   </div>
                   <div className="scan-text">Scan QR code with WhatsApp</div>
                 </div>
@@ -219,6 +215,56 @@ export default function Home() {
             </button>
           </Link>
         </div>
+
+          <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            <p>API Endpoint: /api/webhook/whatsapp</p>
+          </div>
+
+          {/* Tech Stack Logos */}
+          <div style={{ marginTop: '3rem', overflow: 'hidden' }}>
+            <p style={{ textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)', marginBottom: '1.5rem', fontWeight: '500' }}>POWERED BY</p>
+            <div className="logo-scroll">
+              <div className="logo-track">
+                <img src="https://seeklogo.com/images/S/supabase-logo-DCC676FFE2-seeklogo.com.png" alt="Supabase" className="tech-logo" />
+                <img src="https://assets.vercel.com/image/upload/front/favicon/vercel/180x180.png" alt="Vercel" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="OpenAI" className="tech-logo" />
+                <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini" className="tech-logo" />
+                <img src="https://docs.mistral.ai/img/logo.svg" alt="Mistral" className="tech-logo" />
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSvKm8Rj0in6tfZZtOKe6hRVaYRmjTP4yNVlw&s" alt="Groq" className="tech-logo" />
+                <img src="https://www.pinecone.io/images/pinecone-logo.svg" alt="Pinecone" className="tech-logo" />
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6plnv5Uk-GlwEFFitIHQOr3I6G5U4gQDu3A&s" alt="n8n" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" alt="React" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Typescript_logo_2020.svg" alt="TypeScript" className="tech-logo" />
+                <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" alt="Google Sheets" className="tech-logo" />
+                <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" alt="Google Drive" className="tech-logo" />
+                <img src="https://cdn.worldvectorlogo.com/logos/zapier.svg" alt="Zapier" className="tech-logo" />
+                <img src="https://redis.io/wp-content/uploads/2024/04/Logotype.svg" alt="Redis" className="tech-logo" />
+                <img src="https://avatars.githubusercontent.com/u/100530534" alt="Zep" className="tech-logo" />
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRW2tekZ3saj0otmzVSl0UuDlCKzvsP42FW9Q&s" alt="Hostinger" className="tech-logo" />
+                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" className="tech-logo" />
+                {/* Duplicate for seamless loop */}
+                <img src="https://seeklogo.com/images/S/supabase-logo-DCC676FFE2-seeklogo.com.png" alt="Supabase" className="tech-logo" />
+                <img src="https://assets.vercel.com/image/upload/front/favicon/vercel/180x180.png" alt="Vercel" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/ChatGPT_logo.svg" alt="OpenAI" className="tech-logo" />
+                <img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" alt="Gemini" className="tech-logo" />
+                <img src="https://docs.mistral.ai/img/logo.svg" alt="Mistral" className="tech-logo" />
+                <img src="https://wow.groq.com/wp-content/uploads/2024/03/PBG-mark1-color.svg" alt="Groq" className="tech-logo" />
+                <img src="https://www.pinecone.io/images/pinecone-logo.svg" alt="Pinecone" className="tech-logo" />
+                <img src="https://avatars.githubusercontent.com/u/3979584" alt="n8n" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a7/React-icon.svg" alt="React" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/4/4c/Typescript_logo_2020.svg" alt="TypeScript" className="tech-logo" />
+                <img src="https://www.gstatic.com/images/branding/product/1x/sheets_2020q4_48dp.png" alt="Google Sheets" className="tech-logo" />
+                <img src="https://www.gstatic.com/images/branding/product/1x/drive_2020q4_48dp.png" alt="Google Drive" className="tech-logo" />
+                <img src="https://cdn.worldvectorlogo.com/logos/zapier.svg" alt="Zapier" className="tech-logo" />
+                <img src="https://redis.io/wp-content/uploads/2024/04/Logotype.svg" alt="Redis" className="tech-logo" />
+                <img src="https://avatars.githubusercontent.com/u/100530534" alt="Zep" className="tech-logo" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/31/Hostinger_logo.svg" alt="Hostinger" className="tech-logo" />
+                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub" className="tech-logo" />
+              </div>
+            </div>
+          </div>
 
           <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
             <p>API Endpoint: /api/webhook/whatsapp</p>

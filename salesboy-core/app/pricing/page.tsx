@@ -7,9 +7,10 @@ export default function PricingPage() {
       {/* Navigation */}
       <nav style={{ padding: '1rem 2rem', borderBottom: '1px solid var(--border)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link href="/" style={{ textDecoration: 'none' }}>
+          <Link href="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <img src="/favicon.svg" alt="Logo" style={{ width: '32px', height: '32px' }} />
             <h1 style={{ fontSize: '1.5rem', fontWeight: '600', color: 'var(--text-primary)' }}>
-              Salesboy AI
+              Sales-up
             </h1>
           </Link>
           <div style={{ display: 'flex', gap: '2rem', alignItems: 'center' }}>

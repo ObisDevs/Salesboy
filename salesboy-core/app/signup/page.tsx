@@ -88,9 +88,14 @@ export default function SignupPage() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }} className="md:p-8">
       <div className="card" style={{ maxWidth: '400px', width: '100%' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
+          <img src="/favicon.svg" alt="Logo" style={{ width: '72px', height: '72px', marginBottom: '0.5rem' }} />
+          <h2 style={{ fontSize: '1.75rem', fontWeight: '600', color: 'var(--text-primary)' }}>Sales-up</h2>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)', marginTop: '0.5rem', textAlign: 'center' }}>10x your sales with AI-powered WhatsApp automation</p>
+        </div>
         <BackButton href="/" label="Back to Home" />
         <h1 style={{ fontSize: '1.75rem', fontWeight: '600', marginBottom: '0.5rem' }} className="md:text-2xl">Sign Up</h1>
-        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Create your Salesboy AI account</p>
+        <p style={{ color: 'var(--text-muted)', marginBottom: '2rem' }}>Create your account</p>
 
         {error && (
           <div style={{ padding: '1rem', background: '#fee', border: '1px solid #fcc', borderRadius: '8px', marginBottom: '1rem', color: '#c00' }}>
@@ -130,6 +135,7 @@ export default function SignupPage() {
           </Button>
         </form>
 
+        {/* Google Sign-In - Hidden until OAuth is configured
         <div style={{ margin: '1.5rem 0', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
           OR
         </div>
@@ -143,6 +149,7 @@ export default function SignupPage() {
           </svg>
           Continue with Google
         </Button>
+        */}
 
         <div style={{ marginTop: '1.5rem', textAlign: 'center', fontSize: '0.875rem' }}>
           <span style={{ color: 'var(--text-muted)' }}>Already have an account? </span>
