@@ -112,22 +112,32 @@ export async function POST(request: NextRequest) {
     
     const { data: chatHistory } = await supabaseAdmin
       .from('chat_logs')
-      .select('message_body, direction')
+      .select('message_body, direction, timestamp')
       .eq('user_id', actualUserId)
       .eq('from_number', from)
       .order('timestamp', { ascending: false })
       .limit(20)
     
-    const conversationContext = chatHistory?.slice(0, 10).reverse().map((msg: any) => 
+    // Check if this is a new conversation (last message > 6 hours ago)
+    const isNewConversation = !chatHistory || chatHistory.length === 0 || 
+      (new Date().getTime() - new Date(chatHistory[0].timestamp).getTime()) > (6 * 60 * 60 * 1000)
+    
+    // Recent context (last 10 messages for active conversation)
+    const recentContext = chatHistory?.slice(0, 10).reverse().map((msg: any) => 
       `${msg.direction === 'incoming' ? 'Customer' : 'Assistant'}: ${msg.message_body}`
     ).join('\n') || ''
     
-    console.log('💬 Conversation history:', chatHistory?.length || 0, 'messages loaded')
+    // Full history context (all 20 messages for reference)
+    const fullHistoryContext = chatHistory?.reverse().map((msg: any) => 
+      `${msg.direction === 'incoming' ? 'Customer' : 'Assistant'}: ${msg.message_body}`
+    ).join('\n') || ''
+    
+    console.log('💬 Conversation history:', chatHistory?.length || 0, 'messages loaded', '| New conversation:', isNewConversation)
     
     console.log('🧠 Classifying intent...')
     let intent
     try {
-      intent = await classifyIntent(actualUserId, from, message, conversationContext)
+      intent = await classifyIntent(actualUserId, from, message, recentContext)
       console.log('✅ Intent classified:', { intent: intent.intent, task_type: intent.task_type, notify_owner: intent.notify_owner, show_customer_notification: intent.show_customer_notification })
     } catch (error) {
       console.error('❌ Intent classification failed:', error)
@@ -151,7 +161,7 @@ export async function POST(request: NextRequest) {
     // Handle Inquiry (silent notification)
     if (intent.intent === 'Inquiry' && intent.task_type === 'inquiry') {
       console.log('🔍 Handling inquiry - AI answers, owner notified silently')
-      responseMessage = await processMessage(actualUserId, message, conversationContext)
+      responseMessage = await processMessage(actualUserId, message, recentContext, isNewConversation, fullHistoryContext)
       
       // Silent notification to owner
       if (intent.notify_owner) {
@@ -162,7 +172,7 @@ export async function POST(request: NextRequest) {
           from_number: from,
           original_message: message,
           ai_response: responseMessage,
-          conversation_context: conversationContext
+          conversation_context: recentContext
         }
         
         try {
@@ -206,7 +216,7 @@ export async function POST(request: NextRequest) {
         user_id: actualUserId,
         from_number: from,
         original_message: message,
-        conversation_context: conversationContext
+        conversation_context: recentContext
       }
 
       console.log('📦 Task payload:', JSON.stringify(taskPayload, null, 2))
@@ -247,7 +257,7 @@ export async function POST(request: NextRequest) {
       try {
         const confirmationPrompt = `The customer's ${intent.task_type.replace('_', ' ')} has been successfully submitted. Details: ${JSON.stringify(payload)}. Write a brief, friendly confirmation message (2-3 sentences) that:\n1. Confirms the action was completed\n2. Summarizes key details (name, items, date, etc.)\n3. Sets expectations for next steps\n\nBe natural and conversational. Don't use generic templates.`
         
-        responseMessage = await processMessage(actualUserId, confirmationPrompt, conversationContext)
+        responseMessage = await processMessage(actualUserId, confirmationPrompt, recentContext, isNewConversation, fullHistoryContext)
         
         // Add "team notified" ONLY if show_customer_notification is true
         if (intent.show_customer_notification) {
@@ -268,7 +278,7 @@ export async function POST(request: NextRequest) {
     } else {
       console.log('💬 Generating AI response...')
       try {
-        responseMessage = await processMessage(actualUserId, message, conversationContext)
+        responseMessage = await processMessage(actualUserId, message, recentContext, isNewConversation, fullHistoryContext)
         console.log('✅ AI response generated')
       } catch (error: any) {
         console.error('❌ AI pipeline failed:', error)
