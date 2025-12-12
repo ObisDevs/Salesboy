@@ -92,11 +92,20 @@ export default function DashboardLayout({
           padding: '2rem', 
           maxWidth: '100%', 
           overflow: 'auto',
-          background: 'var(--bg-primary)'
-        }}>
+          background: 'var(--bg-primary)',
+          width: '100%'
+        }} className="dashboard-main">
           {children}
         </main>
       </div>
+      <style jsx global>{`
+        @media (max-width: 767px) {
+          .dashboard-main {
+            padding: 1rem !important;
+            margin-top: 60px;
+          }
+        }
+      `}</style>
     </ToastProvider>
   )
 }
