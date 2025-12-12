@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser-client'
 import Sidebar from '../components/Sidebar'
 import { ToastProvider } from '../components/ui/toast'
+import InstallPrompt from '../components/InstallPrompt'
+import NotificationPrompt from '../components/NotificationPrompt'
 
 export default function DashboardLayout({
   children,
@@ -95,6 +97,8 @@ export default function DashboardLayout({
           background: 'var(--bg-primary)',
           width: '100%'
         }} className="dashboard-main">
+          <InstallPrompt />
+          <NotificationPrompt />
           {children}
         </main>
       </div>
