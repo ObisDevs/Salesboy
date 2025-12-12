@@ -99,6 +99,11 @@ body {
     font-size: 0.875rem;
   }
   
+  .nav-links {
+    gap: 0.5rem !important;
+    font-size: 0.875rem;
+  }
+  
   /* Hide desktop sidebar on mobile */
   .sidebar-desktop {
     display: none;

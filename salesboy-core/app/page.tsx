@@ -24,14 +24,6 @@ export default function Home() {
           </div>
         </div>
       </nav>
-      <style jsx>{`
-        @media (max-width: 640px) {
-          .nav-links {
-            gap: 0.5rem !important;
-            font-size: 0.875rem;
-          }
-        }
-      `}</style>
 
       {/* Retro Text */}
       <div style={{ padding: '1rem 1rem' }} className="retro-section">
