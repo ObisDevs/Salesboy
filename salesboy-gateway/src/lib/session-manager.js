@@ -3,52 +3,87 @@ const { Client, LocalAuth } = pkg;
 import qrcode from 'qrcode';
 import logger from '../utils/logger.js';
 import fs from 'fs';
-import path from 'path';
 
 class SessionManager {
   constructor() {
     this.sessions = new Map();
-    this.restoreExistingSessions();
+    this.initializingUsers = new Set();
+    // Safe auto-restore with delay
+    this.safeRestoreExistingSessions();
   }
 
-  restoreExistingSessions() {
+  safeRestoreExistingSessions() {
     try {
       const authDir = '.wwebjs_auth';
-      if (!fs.existsSync(authDir)) return;
+      if (!fs.existsSync(authDir)) {
+        logger.info('No existing sessions to restore');
+        return;
+      }
       
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
       const sessions = fs.readdirSync(authDir);
+      const validSessions = sessions
+        .filter(dir => dir.startsWith('session-'))
+        .map(dir => dir.replace('session-', ''))
+        .filter(userId => uuidRegex.test(userId));
       
-      sessions.forEach(sessionDir => {
-        if (sessionDir.startsWith('session-')) {
-          const userId = sessionDir.replace('session-', '');
-          
-          if (uuidRegex.test(userId)) {
-            logger.info(`Restoring session for user ${userId}`);
-            this.createSession(userId).catch(err => 
-              logger.error(`Failed to restore session for ${userId}:`, err)
-            );
-          } else {
-            logger.warn(`Skipping invalid session: ${sessionDir}`);
-          }
-        }
+      if (validSessions.length === 0) {
+        logger.info('No valid sessions to restore');
+        return;
+      }
+
+      logger.info(`Found ${validSessions.length} session(s) to restore`);
+      
+      // Restore sessions ONE AT A TIME with delay to prevent memory crash
+      validSessions.forEach((userId, index) => {
+        setTimeout(() => {
+          logger.info(`Restoring session ${index + 1}/${validSessions.length} for user ${userId}`);
+          this.createSession(userId).catch(err => {
+            logger.error(`Failed to restore session for ${userId}:`, err.message);
+            // Don't cleanup on restore failure - user can manually reconnect
+          });
+        }, index * 5000); // 5 second delay between each restore
       });
     } catch (error) {
-      logger.error('Error restoring sessions:', error);
+      logger.error('Error in session restore:', error);
     }
   }
 
   async createSession(userId) {
-    if (this.sessions.has(userId)) {
-      logger.info(`Session already exists for user ${userId}`);
-      return { success: true, message: 'Session already exists' };
+    // Check if already initializing
+    if (this.initializingUsers.has(userId)) {
+      logger.info(`Session already initializing for user ${userId}`);
+      return { success: true, message: 'Session is initializing' };
     }
+
+    // Check if session already exists and is ready
+    const existing = this.sessions.get(userId);
+    if (existing) {
+      if (existing.ready) {
+        logger.info(`Session already active for user ${userId}`);
+        return { success: true, message: 'Session already active' };
+      } else {
+        logger.info(`Session exists but not ready for user ${userId}`);
+        return { success: true, message: 'Session connecting' };
+      }
+    }
+
+    this.initializingUsers.add(userId);
 
     const client = new Client({
       authStrategy: new LocalAuth({ clientId: userId }),
       puppeteer: {
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
       }
     });
 
@@ -70,14 +105,15 @@ class SessionManager {
     });
 
     client.on('ready', async () => {
-      logger.info(`WhatsApp client ready for user ${userId}`);
+      logger.info(`✅ WhatsApp client ready for user ${userId}`);
       sessionData.ready = true;
+      sessionData.qr = null; // Clear QR once connected
+      this.initializingUsers.delete(userId);
       
-      // Store this client's WhatsApp number for message filtering
       try {
         const info = await client.info;
         sessionData.myNumber = info?.wid?._serialized;
-        logger.info(`User ${userId} WhatsApp number: ${sessionData.myNumber}`);
+        logger.info(`User ${userId} connected with number: ${sessionData.myNumber}`);
       } catch (err) {
         logger.error(`Failed to get WhatsApp number for ${userId}:`, err);
       }
@@ -89,66 +125,52 @@ class SessionManager {
 
     client.on('auth_failure', (msg) => {
       logger.error(`Auth failure for user ${userId}: ${msg}`);
+      this.sessions.delete(userId);
+      this.initializingUsers.delete(userId);
+      // DON'T delete auth folder on auth_failure - might be temporary
     });
 
     client.on('disconnected', (reason) => {
       logger.warn(`User ${userId} disconnected: ${reason}`);
       this.sessions.delete(userId);
-      
-      // Delete auth folder - user must scan QR again to reconnect
-      try {
-        const authPath = `.wwebjs_auth/session-${userId}`;
-        if (fs.existsSync(authPath)) {
-          fs.rmSync(authPath, { recursive: true, force: true });
-          logger.info(`Deleted WhatsApp auth for ${userId}`);
-        }
-      } catch (err) {
-        logger.error(`Failed to delete auth for ${userId}:`, err);
-      }
+      this.initializingUsers.delete(userId);
+      // DON'T delete auth folder - user can reconnect
     });
 
     client.on('message', async (message) => {
-      // Only process messages sent TO this user's WhatsApp
-      // Skip if this message belongs to a different session
       if (sessionData.myNumber && message.to && message.to !== sessionData.myNumber) {
-        return; // Message not for this client
+        return;
       }
       
-      // Ignore broadcasts and status updates
       if (message.from.includes('@broadcast') || message.from.includes('status@')) {
         return;
       }
       
-      logger.info(`Message received from ${message.from} for user ${userId}: ${message.body}`);
+      logger.info(`Message from ${message.from} for user ${userId}`);
       
-      // Forward to webhook
       try {
         const webhookUrl = process.env.NEXT_WEBHOOK_URL;
         if (webhookUrl) {
-          const payload = {
-            user_id: userId,
-            from: message.from,
-            message: message.body,
-            timestamp: message.timestamp
-          };
-          
           const response = await fetch(webhookUrl, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'x-signature': 'temp-signature' // Temporary - will fix HMAC later
+              'x-signature': 'temp-signature'
             },
-            body: JSON.stringify(payload)
+            body: JSON.stringify({
+              user_id: userId,
+              from: message.from,
+              message: message.body,
+              timestamp: message.timestamp
+            })
           });
-          logger.info(`Message forwarded to webhook: ${response.status}`);
           
           if (!response.ok) {
-            const errorText = await response.text();
-            logger.error(`Webhook error response: ${errorText}`);
+            logger.error(`Webhook error: ${response.status}`);
           }
         }
       } catch (error) {
-        logger.error(`Failed to forward message to webhook:`, error);
+        logger.error(`Failed to forward message:`, error);
       }
     });
 
@@ -158,8 +180,10 @@ class SessionManager {
       await client.initialize();
       return { success: true, message: 'Session initialized' };
     } catch (error) {
-      logger.error(`Failed to initialize session for ${userId}:`, error);
+      logger.error(`Failed to initialize session for ${userId}:`, error.message);
       this.sessions.delete(userId);
+      this.initializingUsers.delete(userId);
+      // DON'T delete auth folder - let user try again
       return { success: false, message: error.message };
     }
   }
@@ -173,11 +197,13 @@ class SessionManager {
     try {
       await sessionData.client.destroy();
       this.sessions.delete(userId);
+      this.initializingUsers.delete(userId);
       
-      // Delete auth folder - user must scan QR again
+      // Delete auth folder when user explicitly stops
       const authPath = `.wwebjs_auth/session-${userId}`;
       if (fs.existsSync(authPath)) {
         fs.rmSync(authPath, { recursive: true, force: true });
+        logger.info(`Deleted auth for ${userId}`);
       }
       
       logger.info(`Session stopped for ${userId}`);
@@ -202,15 +228,11 @@ class SessionManager {
 
   async getQRCode(userId) {
     const sessionData = this.sessions.get(userId);
-    if (!sessionData) {
-      return null;
+    if (!sessionData || !sessionData.qr || sessionData.ready) {
+      return null; // No QR if session doesn't exist, no QR available, or already connected
     }
     
-    if (sessionData.qr) {
-      return await qrcode.toDataURL(sessionData.qr);
-    }
-    
-    return null;
+    return await qrcode.toDataURL(sessionData.qr);
   }
 
   addQRListener(userId, listener) {
